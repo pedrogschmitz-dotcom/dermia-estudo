@@ -1,4 +1,4 @@
-# DermIA · estudo de dermatoscopia
+# Dermatolog.IA · estudo de dermatoscopia
 
 Uso pessoal de estudo do Dr. Pedro Schmitz (CRM/SC 38229). Não é diagnóstico; não usar para conduta. Software que apoia diagnóstico exige registro na ANVISA.
 

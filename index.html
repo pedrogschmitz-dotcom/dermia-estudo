@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://isic-archive.s3.us-east-1.amazonaws.com; connect-src 'self'; font-src 'self'; worker-src 'self' blob:; base-uri 'none'; form-action 'none'">
+<meta name="theme-color" content="#1A1A1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DermIA">
+<title>DermIA · estudo de dermatoscopia</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+@font-face{font-family:Anton;src:url(fonts/anton-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:Inter;src:url(fonts/inter-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:Inter;src:url(fonts/inter-latin-800-normal.woff2) format("woff2");font-weight:800;font-display:swap}
+/* Identidade @drpedroschmitz, um só tema (escuro). Ideia: barra fixa de marca, um cartão "lente" onde vivem foto, mapa e veredito, e painéis alcançados por abas. */
+:root{
+  --ink:#1A1A1A; --surface:#232120; --raised:#2D2A28; --line:#3B3733; --paper:#F4F1EC; --mute:#A49C90;
+  --accent:#E8650A; --gold:#C4A060; --bad:#FF6B5B; --ok:#6FCF97; --cool:#3C82FF;
+  --display:Anton,Impact,"Arial Narrow",sans-serif; --body:Inter,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --r:20px; --r2:14px; --bar:56px;
+  --o:var(--accent); --k:var(--ink); --k2:var(--surface); --k3:var(--raised); --w:var(--paper); --m:var(--mute); --g:var(--gold); --blue:var(--cool);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+html,body{margin:0;color:var(--paper);font:500 15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(130% 55% at 50% -12%,rgba(232,101,10,.16),transparent 62%) no-repeat,var(--ink);background-color:var(--ink);min-height:100%}
+button,input,select,textarea{font-family:var(--body)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.hide{display:none!important}
+/* barra de marca */
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;background:rgba(26,26,26,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06)}
+.top svg{flex:none}
+.top h1{font:400 26px/1 var(--display);letter-spacing:.03em;text-transform:uppercase;margin:0;color:var(--paper)}
+.top h1 b{font-weight:400;color:var(--accent)}
+.top .who{margin-left:auto;text-align:right;font-size:11px;line-height:1.25;color:var(--mute)}
+.wrap{max-width:560px;margin:0 auto;padding:12px 16px calc(44px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px}
+h2,h3{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.03em;margin:0;text-wrap:balance}
+h2{font-size:20px;line-height:1.1;margin:8px 2px -4px}
+.sub{color:var(--mute);font-size:13px;margin:4px 0 10px}
+.d{font-size:11.5px;color:var(--mute);font-weight:500}
+.eyebrow{font:800 11px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+/* aviso de estudo */
+.disc{background:rgba(232,101,10,.09);border:1px solid rgba(232,101,10,.45);border-radius:var(--r2);padding:0;margin:0}
+.disc summary{list-style:none;display:flex;align-items:center;gap:8px;padding:10px 12px;font:800 12.5px/1.2 var(--body);letter-spacing:.04em;text-transform:uppercase;color:#FFC79E;cursor:pointer}
+.disc summary::-webkit-details-marker{display:none}
+.disc summary::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .2s}
+.disc[open] summary::after{transform:rotate(-135deg)}
+.disc p{margin:0;padding:0 12px 11px;font-size:13px;color:#F3D9C6}
+/* cartões e botões */
+.card{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0) 42%),var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--r);padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;border:0;border-radius:var(--r2);padding:15px 14px;font:800 16px/1.1 var(--body);text-align:center;color:#17110C;background:var(--accent);cursor:pointer;transition:transform .12s,filter .12s;box-shadow:0 6px 18px rgba(232,101,10,.28)}
+.btn:active{transform:scale(.98);filter:brightness(.95)}
+.btn.ghost{background:var(--raised);color:var(--paper);font-weight:500;box-shadow:none;border:1px solid var(--line)}
+.btn[disabled]{opacity:.5}
+.btn svg{flex:none}
+.link{background:none;border:0;padding:6px 2px;color:var(--mute);font:500 13px var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+input[type=password],input[type=text]{width:100%;padding:14px;border-radius:var(--r2);border:1px solid var(--line);background:#141312;color:var(--paper);font:500 16px var(--body);margin:8px 0}
+.prog{height:8px;background:var(--raised);border-radius:6px;overflow:hidden;margin:12px 0 6px}.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width .25s}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #555;border-top-color:var(--accent);border-radius:50%;animation:r 1s linear infinite;vertical-align:-2px;margin-right:8px}@keyframes r{to{transform:rotate(360deg)}}
+/* bloqueio e Face ID */
+.center{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.center h3{font-size:22px}
+.center p{margin:0;color:var(--mute);font-size:13.5px;max-width:34ch}
+.faceid{width:64px;height:64px;color:var(--accent)}
+/* captura */
+.lens{position:relative;display:grid;place-items:center;aspect-ratio:16/10;border-radius:var(--r2);border:1.5px dashed rgba(196,160,96,.55);background:radial-gradient(circle at 50% 50%,rgba(232,101,10,.14),transparent 58%),#191817;margin-bottom:12px;overflow:hidden}
+.lens .ring{width:34%;margin-bottom:22px;aspect-ratio:1;border-radius:50%;border:2px solid var(--accent);box-shadow:0 0 0 10px rgba(232,101,10,.10),inset 0 0 0 14px rgba(255,255,255,.03);display:grid;place-items:center}
+.lens .ring i{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.lens span{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:12.5px;color:var(--mute)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+details.ctx{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+details.ctx>summary{list-style:none;display:flex;align-items:center;gap:8px;font:800 14px var(--body);cursor:pointer;padding:4px 0}
+details.ctx>summary::-webkit-details-marker{display:none}
+details.ctx>summary::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);transition:transform .2s}
+details.ctx[open]>summary::after{transform:rotate(-135deg)}
+.count{font:800 11px var(--body);color:#17110C;background:var(--gold);border-radius:999px;padding:2px 8px}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.f label{font-size:12px;color:var(--mute);display:block}
+.f select,.f input[type=number],.f textarea{width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);background:#141312;color:var(--paper);font:500 15px var(--body);margin-top:4px}
+.f select{color-scheme:dark;-webkit-appearance:none;appearance:none;background:#141312 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23999' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;padding-right:30px;min-height:44px}.f option{background:#141312;color:#F4F1EC}
+.f .full{grid-column:1/3}
+.ck{display:flex;flex-wrap:wrap;gap:7px;margin:7px 0 4px}
+.ck label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:13px;color:var(--paper);background:#1B1A19;cursor:pointer;transition:background .15s,border-color .15s}
+.ck input{position:absolute;opacity:0;pointer-events:none}
+.ck label:has(input:checked){background:rgba(232,101,10,.18);border-color:var(--accent);color:#FFD9BD;font-weight:800}
+.ck label:has(input:focus-visible){outline:2px solid var(--gold);outline-offset:2px}
+/* carregando */
+.loading{display:flex;align-items:center;gap:14px}
+.scan{position:relative;width:84px;height:84px;border-radius:16px;overflow:hidden;flex:none;background:#000;border:1px solid var(--line)}
+.scan canvas{width:100%;height:100%;display:block}
+.scan::after{content:"";position:absolute;left:0;right:0;height:36%;top:-36%;background:linear-gradient(180deg,transparent,rgba(232,101,10,.55));border-bottom:2px solid var(--accent);animation:scan 1.3s linear infinite}
+@keyframes scan{to{top:100%}}
+/* resultado */
+#res{display:flex;flex-direction:column;gap:14px}
+#res>*{animation:up .35s ease both}
+@keyframes up{from{opacity:.0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.tabs{position:sticky;top:calc(var(--bar) + env(safe-area-inset-top) - 6px);z-index:4;display:flex;gap:6px;padding:6px;margin:0 -4px;background:rgba(26,26,26,.86);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.07);border-radius:999px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;border:0;background:transparent;color:var(--mute);font:800 12.5px var(--body);padding:9px 12px;border-radius:999px;white-space:nowrap;cursor:pointer}
+.tabs button.on{background:var(--paper);color:#161412}
+.sec{scroll-margin-top:calc(var(--bar) + env(safe-area-inset-top) + 58px);display:flex;flex-direction:column;gap:10px}
+.viewer{position:relative;width:100%;aspect-ratio:1;border-radius:16px;overflow:hidden;background:#000}
+.viewer canvas{position:absolute;inset:0;width:100%;height:100%}
+.verdict{font:400 30px/1.05 var(--display);text-transform:uppercase;letter-spacing:.02em;margin:6px 0 8px;text-wrap:balance}
+.vmeta{display:flex;align-items:center;flex-wrap:wrap;gap:8px;color:var(--mute);font-size:13px}
+.pill{font:800 14px var(--body);font-variant-numeric:tabular-nums;color:#17110C;background:var(--accent);border-radius:999px;padding:4px 11px}
+#chute{margin:14px 2px 2px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:12px;background:#171615;border-radius:12px;padding:4px}
+.seg button{padding:10px;border-radius:9px;border:0;background:transparent;color:var(--mute);font:800 13px var(--body);cursor:pointer}.seg button.on{background:var(--paper);color:#161412}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 0}
+.chip{border:1px solid var(--line);background:#1B1A19;color:var(--paper);border-radius:999px;padding:8px 12px;font:500 13px var(--body);cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#17110C;font-weight:800}
+.legend{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-top:10px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.prow{display:grid;grid-template-columns:22px 1fr auto;gap:3px 8px;align-items:baseline;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.prow:last-child{border-bottom:0}
+.prow .rk{font:800 12px var(--body);color:var(--mute);font-variant-numeric:tabular-nums}
+.prow .n{font-size:14.5px;line-height:1.3}.prow .v{font:800 14.5px var(--body);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.prow .bar{grid-column:2/4;height:6px;background:var(--raised);border-radius:6px;overflow:hidden;margin-top:3px}
+.prow .bar i{display:block;height:100%;background:linear-gradient(90deg,#B9500A,var(--accent));border-radius:6px;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.prow.top .n{font-weight:800}.prow.top .rk{color:var(--accent)}
+.prow.dim .bar i{background:#5b5750}.prow.dim .n,.prow.dim .v{color:var(--mute)}
+.stack{display:flex;height:14px;border-radius:8px;overflow:hidden;background:var(--raised);margin:8px 0}
+.stack i{display:block;height:100%}
+.leg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12.5px;color:var(--paper)}
+.leg b{font-weight:800;font-variant-numeric:tabular-nums}
+.alert{background:rgba(255,107,91,.12);border:1px solid var(--bad);color:#FFD2CC;border-radius:var(--r2);padding:11px 13px;font-size:14px}
+.alert.soft{background:rgba(196,160,96,.12);border-color:rgba(196,160,96,.7);color:#F1E4C3}
+.fl{border-left:3px solid var(--gold);padding:8px 12px;margin:8px 0;background:rgba(196,160,96,.09);border-radius:0 12px 12px 0;font-size:13.5px;color:#EADFC6}
+.fl.hi{border-color:var(--bad);background:rgba(255,107,91,.10);color:#FFD9D3}.fl.lo{border-color:#6B665C;background:rgba(255,255,255,.03);color:#CFC9BF}
+#why h3{font-size:15px;margin:16px 0 6px;color:var(--gold)}
+#why ul{margin:6px 0;padding-left:18px}#why li{margin:3px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cs{background:var(--raised);border:1px solid rgba(255,255,255,.05);border-radius:16px;overflow:hidden;font-size:12px}
+.cs img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:#000;cursor:zoom-in}
+.cs div{padding:9px 10px 10px}.cs div div{padding:0}
+.cs .dx{font:800 13px/1.25 var(--body);color:var(--paper)}.cs .mt{color:var(--mute);margin-top:3px}
+.tag{display:inline-block;font-size:11px;border-radius:999px;padding:2px 8px;margin:5px 4px 0 0;background:rgba(196,160,96,.16);color:var(--gold)}
+.tag.bad{background:rgba(255,107,91,.14);color:var(--bad)}.tag.ok{background:rgba(111,207,151,.13);color:var(--ok)}
+/* informações */
+details.info{background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--r2);padding:13px 15px}
+details.info summary{font:800 14px var(--body);cursor:pointer}
+details.info p,details.info li{color:#CFC9BF;font-size:13px}details.info ul{padding-left:18px;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}td{padding:6px 0;border-bottom:1px solid var(--line)}td:last-child{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:8px}
+footer{color:var(--mute);font-size:12px;display:flex;flex-direction:column;gap:6px;margin-top:6px}
+footer a{color:var(--mute)}
+footer .links{display:flex;flex-wrap:wrap;gap:4px 14px}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9;display:flex;align-items:center;justify-content:center;padding:10px}
+#ov img{max-width:100%;max-height:100%;border-radius:10px}
+.view{display:flex;flex-direction:column;gap:14px}
+.wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:rgba(22,21,20,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.07)}
+.tabbar .in{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%;max-width:520px}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:transparent;color:var(--mute);font:800 11px var(--body);letter-spacing:.02em;padding:6px 4px;border-radius:12px;cursor:pointer}
+.tabbar button svg{width:24px;height:24px}
+.tabbar button.on{color:var(--accent);background:rgba(232,101,10,.10)}
+.mini{font-size:12px;color:var(--mute);text-align:center;margin:-4px 0 0}
+.mini a{color:var(--mute)}
+.set{display:flex;flex-direction:column;gap:0}
+.set .row{display:flex;align-items:center;gap:12px;padding:14px 2px;border-bottom:1px solid var(--line);background:none;border-left:0;border-right:0;border-top:0;color:var(--paper);font:500 15px var(--body);text-align:left;cursor:pointer;width:100%}
+.set .row:last-child{border-bottom:0}
+.set .row span{flex:1}.set .row small{color:var(--mute);font-size:12.5px}
+.set .row.danger{color:var(--bad)}
+.card h3{font-size:18px;margin:0 0 8px}
+.card p,.card li{color:#CFC9BF;font-size:13.5px}.card ul{padding-left:18px;margin:6px 0}
+.edwrap{position:relative;margin:10px auto 12px;border-radius:14px;overflow:hidden;touch-action:none;background:#000;line-height:0}
+.edwrap canvas{display:block}
+#ed-box{position:absolute;border:2px solid var(--accent);border-radius:6px;box-shadow:0 0 0 9999px rgba(10,10,10,.58);cursor:move}
+#ed-box::before,#ed-box::after{content:"";position:absolute;inset:33.3% 0;border-top:1px solid rgba(255,255,255,.28);border-bottom:1px solid rgba(255,255,255,.28)}
+#ed-box::after{inset:0 33.3%;border:0;border-left:1px solid rgba(255,255,255,.28);border-right:1px solid rgba(255,255,255,.28)}
+#ed-box i{position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid var(--ink)}
+input[type=range]{width:100%;accent-color:#E8650A;margin:4px 0 12px}
+.edrow{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--mute)}
+.set .row input[type=checkbox]{width:22px;height:22px;accent-color:#E8650A}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top">
+  <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="11.5" fill="none" stroke="#E8650A" stroke-width="2.5"/><circle cx="15" cy="15" r="6" fill="none" stroke="#C4A060" stroke-width="1.5"/><circle cx="15" cy="15" r="2" fill="#F4F1EC"/></svg>
+  <h1>Derm<b>IA</b></h1>
+  <div class="who">Dr. Pedro Schmitz<br>CRM/SC 38229</div>
+</header>
+<div class="wrap">
+<section id="view-analisar" class="view">
+  <div id="upd" class="alert soft hide" style="cursor:pointer">Nova versão instalada. Toque aqui para recarregar.</div>
+  
+
+  <div id="lock" class="card center hide">
+    <svg class="faceid" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 20V12a6 6 0 0 1 6-6h8M44 6h8a6 6 0 0 1 6 6v8M58 44v8a6 6 0 0 1-6 6h-8M20 58h-8a6 6 0 0 1-6-6v-8"/><path d="M23 25v5M41 25v5M32 25v10h-3M24 42c4.5 4 11.5 4 16 0"/></svg>
+    <h3>App bloqueado</h3>
+    <p>Use o Face ID para abrir o DermIA neste aparelho.</p>
+    <button id="btn-fid" class="btn">Entrar com Face ID</button>
+    <div id="lock-msg" class="sub" style="margin:0"></div>
+    <div id="lock-alt" class="hide" style="width:100%"><input id="lock-pw" type="password" placeholder="Frase de acesso" autocomplete="off" autocapitalize="off"><button id="lock-go" class="btn ghost">Entrar com a frase</button></div>
+    <div><button id="lock-pass" class="link">Usar a frase de acesso</button> <button id="lock-reset" class="link">Redefinir neste aparelho</button></div>
+  </div>
+
+  <div id="modelo" class="card">
+    <div id="m-status"><span class="spin"></span>Verificando o modelo…</div>
+    <div id="m-install" class="hide">
+      <span class="eyebrow">Primeiro acesso neste aparelho</span>
+      <h3 style="font-size:22px;margin:6px 0 6px">Instalar o modelo</h3>
+      <p class="sub" style="margin:0 0 6px">São 85 MB, baixados uma vez. Depois o app abre offline e não pede mais a frase.</p>
+      <input id="pw" type="password" placeholder="Frase de acesso" autocomplete="off" autocapitalize="off">
+      <button id="btn-install" class="btn">Instalar modelo</button>
+      <div class="prog hide" id="prog"><i></i></div>
+      <div id="m-msg" class="sub"></div>
+      <details class="ctx"><summary>Tenho o arquivo do modelo (.onnx)</summary><input id="file-model" type="file" accept=".onnx,application/octet-stream" class="btn ghost" style="padding:10px;margin-top:8px"></details>
+    </div>
+  </div>
+
+  <div id="fid-offer" class="card center hide">
+    <svg class="faceid" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 20V12a6 6 0 0 1 6-6h8M44 6h8a6 6 0 0 1 6 6v8M58 44v8a6 6 0 0 1-6 6h-8M20 58h-8a6 6 0 0 1-6-6v-8"/><path d="M23 25v5M41 25v5M32 25v10h-3M24 42c4.5 4 11.5 4 16 0"/></svg>
+    <h3>Abrir com Face ID</h3>
+    <p>Nas próximas vezes o app abre com o seu rosto, sem digitar a frase. O iPhone pode pedir o Face ID duas vezes agora.</p>
+    <button id="fid-on" class="btn">Ativar Face ID</button>
+    <button id="fid-later" class="link">Agora não</button>
+    <div id="fid-msg" class="sub" style="margin:0"></div>
+  </div>
+
+  <div id="entrada" class="card hide">
+    <div class="lens"><div class="ring"><i></i></div><span>Lesão no centro. Você pode ajustar o recorte depois.</span></div>
+    <div class="two">
+      <label class="btn" for="foto-cam"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Tirar foto</label>
+      <label class="btn ghost" for="foto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>Galeria</label>
+    </div>
+    <div id="foto-msg" class="alert hide" style="margin-top:10px"></div>
+    <input id="foto-cam" type="file" accept="image/*" capture="environment" class="hide">
+    <input id="foto" type="file" accept="image/*" class="hide">
+    <div class="sub" style="margin:10px 2px 0">Ferramenta de estudo, não é diagnóstico. Tudo roda no aparelho: a foto não sai do iPhone.</div>
+    <details id="ctx" class="ctx"><summary>Contexto clínico (opcional) <span id="ctx-n" class="count hide"></span></summary>
+      <div class="sub" style="margin:6px 0">Tudo opcional. Região, idade e sexo ajustam as probabilidades (com base no ISIC) e você pode comparar com "só imagem". O resto gera sinais de alerta por regra clínica e não muda o modelo.</div>
+      <div class="f">
+        <div class="full"><label>Região da lesão<select id="c-reg"></select></label></div>
+        <div><label>Idade (anos)<input id="c-idade" type="number" inputmode="numeric" min="0" max="120"></label></div>
+        <div><label>Sexo<select id="c-sexo"><option value="">—</option><option value="M">Masculino</option><option value="F">Feminino</option></select></label></div>
+        <div><label>Fototipo (Fitzpatrick)<select id="c-fito"><option value="">—</option><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option><option>VI</option></select></label></div>
+        <div><label>Há quanto tempo<select id="c-tempo"><option value="">—</option><option value="0.5">menos de 1 mês</option><option value="2">1 a 3 meses</option><option value="4.5">3 a 6 meses</option><option value="9">6 a 12 meses</option><option value="18">1 a 2 anos</option><option value="36">mais de 2 anos</option><option value="0">desde o nascimento</option></select></label></div>
+        <div><label>Tamanho inicial (mm)<input id="c-t0" type="number" inputmode="decimal" min="0" step="0.5"></label></div>
+        <div><label>Tamanho atual (mm)<input id="c-t1" type="number" inputmode="decimal" min="0" step="0.5"></label></div>
+      </div>
+      <span class="d">Evolução relatada</span>
+      <div class="ck" id="ck-evo"><label><input type="checkbox" value="cresceu">cresceu</label><label><input type="checkbox" value="cor">mudou de cor</label><label><input type="checkbox" value="forma">mudou de forma</label><label><input type="checkbox" value="nova">lesão nova</label><label><input type="checkbox" value="estavel">estável</label></div>
+      <span class="d">Sintomas e exame</span>
+      <div class="ck" id="ck-sint"><label><input type="checkbox" value="coceira">coceira</label><label><input type="checkbox" value="dor">dor</label><label><input type="checkbox" value="sangra">sangra</label><label><input type="checkbox" value="ferida">ferida que não cicatriza</label><label><input type="checkbox" value="crosta">crosta</label><label><input type="checkbox" value="elevada">elevada</label><label><input type="checkbox" value="firme">firme</label><label><input type="checkbox" value="patinho">diferente das outras (patinho feio)</label></div>
+      <span class="d">Histórico</span>
+      <div class="ck" id="ck-hist"><label><input type="checkbox" value="ca_pele">câncer de pele antes</label><label><input type="checkbox" value="fam_mel">melanoma na família</label><label><input type="checkbox" value="sol">muito sol ou queimaduras</label><label><input type="checkbox" value="imuno">imunossupressão</label><label><input type="checkbox" value="muitos_nevos">muitos nevos</label></div>
+      <div class="f"><div class="full"><label>Observações<textarea id="c-obs" rows="2" placeholder="Ex.: sangrou após trauma"></textarea></label></div></div>
+      <button class="btn ghost" id="c-clear" style="padding:11px;font-size:14px">Limpar contexto</button>
+    </details>
+  </div>
+
+  <div id="editor" class="card hide">
+    <span class="eyebrow">Ajuste o recorte</span>
+    <div id="ed-note" class="sub" style="margin:4px 0 0">Deixe a lesão inteira dentro do quadrado, com um pouco de pele em volta. Arraste para mover; use dois dedos ou a barra para o tamanho.</div>
+    <div id="ed-wrap" class="edwrap"><canvas id="ed-cv"></canvas><div id="ed-box"><i></i></div></div>
+    <div class="edrow"><span>menor</span><input id="ed-size" type="range" min="0" max="1000" value="500" aria-label="Tamanho do recorte"><span>maior</span></div>
+    <div class="two"><button id="ed-auto" class="btn ghost">Enquadrar lesão</button><button id="ed-go" class="btn">Analisar</button></div>
+    <div style="text-align:center;margin-top:6px"><button id="ed-back" class="link">Trocar foto</button></div>
+  </div>
+
+  <div id="loading" class="card loading hide"><div id="scan" class="scan hide"><canvas id="load-cv" width="168" height="168"></canvas></div><div><span class="spin"></span><span id="load-txt">Analisando…</span></div></div>
+
+  <nav id="tabs" class="tabs hide" aria-label="Seções do resultado"><button data-t="sec-mapa" class="on">Mapa</button><button data-t="sec-dx">Diagnóstico</button><button data-t="whyres">Por quê</button><button data-t="ctxres">Alertas</button><button data-t="sec-casos">Casos</button></nav>
+
+  <div id="res" class="hide">
+    <div id="nonderm" class="alert hide"><b>Esta imagem não parece dermatoscopia.</b> O modelo foi treinado com imagens de dermatoscópio. Fotos comuns, de TBP ou de outra origem dão resultado sem valor.</div>
+
+    <section id="sec-mapa" class="sec">
+      <div class="card">
+        <div class="viewer"><canvas id="cv-base" width="448" height="448"></canvas><canvas id="cv-heat" width="448" height="448"></canvas></div>
+        <div id="chute"></div>
+        <div class="seg"><button id="sg-orig">Foto</button><button id="sg-heat" class="on">Mapa de calor</button></div>
+        <div id="heat-chips" class="chips"></div>
+        <div class="legend"><span><i class="sw" style="background:var(--accent)"></i>a favor do diagnóstico</span><span><i class="sw" style="background:var(--cool)"></i>contra</span></div>
+        <details class="ctx"><summary>Como ler o mapa</summary><div class="sub" style="margin-top:8px">Cada quadrado = 16×16 px do recorte central 224×224. Mostra onde a evidência para o diagnóstico escolhido está, não prova nada sobre a lesão. A intensidade é comparável entre os diagnósticos dos botões. O modelo mistura informação entre regiões vizinhas, então a localização é aproximada.</div></details>
+      </div>
+    </section>
+
+    <section id="sec-dx" class="sec">
+      <h2>Diagnóstico diferencial</h2>
+      <div class="card">
+        <div id="ctxseg" class="seg hide" style="margin:0 0 10px"><button id="v-img">Só imagem</button><button id="v-ctx" class="on">Com contexto</button></div>
+        <div id="ctxnote" class="sub hide" style="margin:0 0 8px"></div>
+        <div id="lowconf" class="alert soft hide" style="margin-bottom:8px"></div>
+        <div id="probs"></div>
+        <button class="chip hide" id="showall" style="margin:10px 0 0"></button>
+        <div class="eyebrow" style="margin:18px 0 0">Por grupo</div><div id="groups"></div>
+        <div class="sub" style="margin:12px 0 0">Chute entre os diagnósticos da lista, calibrado no ISIC. Não é a chance real de a lesão ser aquilo. Subtipos parecidos (nevo displásico, melanoma in situ, nevo composto) se confundem muito, mesmo entre patologistas: olhe os 3 a 5 primeiros. "Sem subtipo no laudo" quer dizer que o laudo dos casos de treino não trazia o subtipo.</div>
+      </div>
+    </section>
+
+    <section id="whyres" class="sec hide"><h2>Por que este chute</h2><div class="card"><div id="why"></div></div></section>
+
+    <section id="ctxres" class="sec hide"><h2>Contexto e alertas</h2><div class="card"><div id="ctxsum" class="sub" style="margin-top:0"></div><div id="flags"></div><div class="sub">Alertas por regra clínica (ABCDE, EFG, fatores de risco), não vêm do modelo e não mudam as probabilidades. Servem para lembrar o que perguntar e examinar.</div><button class="btn ghost" id="copiar" style="padding:12px;font-size:14px;margin-top:6px">Copiar resumo</button></div></section>
+
+    <section id="sec-casos" class="sec">
+      <h2>Casos parecidos</h2>
+      <div class="card">
+        <div id="votes" class="sub" style="margin-top:0"></div>
+        <div id="neigh" class="grid"></div>
+        <div class="sub" style="margin:12px 0 0">Diagnóstico do banco, fonte e licença de cada caso. Toque na foto para ampliar.</div>
+      </div>
+    </section>
+  </div>
+
+  
+  
+  
+</section>
+
+<section id="view-sobre" class="view hide">
+  <h2>Sobre o modelo</h2>
+  <div class="card" style="border-color:rgba(232,101,10,.45)"><h3>Ferramenta de estudo</h3><p style="margin:0">Não é diagnóstico. Não use para decidir conduta em paciente. Software que apoia diagnóstico exige registro na ANVISA. Os resultados são chutes de um modelo treinado no ISIC, para você comparar com o seu raciocínio.</p></div>
+  <div class="card"><h3>Quanto acerta (medido)</h3><div id="acc"></div></div>
+  <div class="card"><h3>Limites e avisos</h3><ul>
+      <li>Banco e treino com predomínio de pele clara (fototipos I a III). Sem validação em pele escura.</li>
+      <li>O modelo é comprimido para caber no celular: mudanças mínimas na foto (um pixel) podem trocar o 1º lugar quando dois diagnósticos estão quase empatados. Fotografe de novo e compare se o resultado estiver dividido.</li>
+      <li>Só vale para dermatoscopia. Foto clínica ou de celular sem dermatoscópio não é avaliada.</li>
+      <li>Ceratose actínica e CEC se confundem; use as 3 primeiras opções, não só a primeira.</li>
+      <li>Modelo: DermLIP-PanDerm (Derm1M, licença CC BY-NC 4.0). Uso pessoal e não comercial; não redistribuir o arquivo.</li>
+      <li>Imagens do banco: ISIC Archive (isic-archive.com), licenças CC-0, CC-BY e CC-BY-NC, com atribuição por caso. Casos do estudo sem histopatologia informada aparecem marcados.</li>
+      <li>O Face ID é uma trava de tela deste app no aparelho; não substitui o bloqueio do próprio iPhone.</li>
+      <li>Ainda não incluídos: casos do Dermoscopedia e seus pacientes com biópsia (banco privado, só no aparelho, com consentimento e sem identificação).</li>
+    </ul></div>
+  <div class="card"><h3>Como usar bem</h3><ul><li>Lesão no centro, foto nítida, dermatoscópio encostado ou polarizado sem reflexo.</li><li>Leia os 3 a 5 primeiros como diagnóstico diferencial, não só o 1º lugar.</li><li>Quando dois diagnósticos estão quase empatados, fotografe de novo e compare.</li><li>Preencha região e idade quando souber: ajustam as probabilidades.</li></ul></div>
+</section>
+
+<section id="view-ajustes" class="view hide">
+  <h2>Ajustes</h2>
+  <div class="card set">
+    <button class="row" id="fid-toggle"><span>Face ID</span><small id="fid-state">verificando…</small></button>
+    <label class="row" for="ed-skip"><span>Analisar direto, sem ajustar o recorte</span><input id="ed-skip" type="checkbox"></label>
+    <button class="row" id="off"><span>Baixar miniaturas para uso offline</span><small>37 MB</small></button>
+    <button class="row" id="upd-check"><span>Procurar atualização</span><small id="ver"></small></button>
+    <button class="row danger" id="rm"><span>Remover modelo deste aparelho</span></button>
+  </div>
+  <div id="st" class="sub" style="margin:0 2px"></div>
+  <div class="card"><p style="margin:0">DermIA · uso pessoal de estudo · Dr. Pedro Schmitz, CRM/SC 38229.<br>Banco: <span id="nb"></span> casos do ISIC Archive. O app se atualiza sozinho quando há versão nova.</p></div>
+</section>
+</div>
+
+<nav class="tabbar" aria-label="Menu"><div class="in">
+  <button data-v="analisar" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>Analisar</button>
+  <button data-v="sobre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>Sobre o modelo</button>
+  <button data-v="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Ajustes</button>
+</div></nav>
+<div id="ov" class="hide"><img id="ovi" alt="Caso ampliado"></div>
+
+<script src="vendor/ort.wasm.min.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const show = (el, on) => el.classList.toggle("hide", !on);
+let session = null, MODEL = null, W = null, HEAD = null, HF = null, EXP = null, BANK = null, BANKV = null;
+let busy = false, LAST = null; // {contrib, probs, order}
+
+/* ---------- armazenamento local do modelo ---------- */
+function idb() { return new Promise((res, rej) => { const r = indexedDB.open("dermia", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function kvGet(k) { const d = await idb(); return new Promise((res, rej) => { const q = d.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
+async function kvSet(k, v) { const d = await idb(); return new Promise((res, rej) => { const t = d.transaction("kv", "readwrite"); t.objectStore("kv").put(v, k); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }); }
+
+/* ---------- carregar dados e modelo ---------- */
+async function getJSON(u) { const r = await fetch(u); if (!r.ok) throw new Error(u + " (" + r.status + ")"); return r.json(); }
+async function getBin(u) { const r = await fetch(u); if (!r.ok) throw new Error(u + " (" + r.status + ")"); return r.arrayBuffer(); }
+async function loadData() {
+  const [m, w, bank, bv, exp] = await Promise.all([getJSON("data/model.json"), getBin("data/model_w.bin"), getJSON("data/bank.json"), getBin("data/bank.bin"), getJSON("data/explain.json")]);
+  MODEL = m; W = new Float32Array(w); BANK = bank; BANKV = new Int8Array(bv); EXP = exp;
+  if (W.length !== m.names.length * m.D) throw new Error("pesos do modelo com tamanho inesperado");
+  if (BANKV.length !== bank.n * 512) throw new Error("banco de casos com tamanho inesperado");
+  HF = { names: m.names, groups: m.groups, T: m.T, cv: m.cv }; HEAD = { names: m.gnames, pt: m.gpt, det: m.det };
+}
+async function makeSession(bytes) {
+  ort.env.wasm.wasmPaths = new URL("vendor/", location.href).href;
+  ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.min(4, navigator.hardwareConcurrency || 2) : 1;
+  session = await ort.InferenceSession.create(bytes, { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
+}
+/* ---------- Face ID: trava de tela local (WebAuthn do próprio aparelho) ---------- */
+const hex = b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, "0")).join("");
+async function pwCheck(pw) { const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]); return hex(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: new TextEncoder().encode("dermia-trava"), iterations: 150000, hash: "SHA-256" }, k, 256)); }
+async function fidAvailable() { try { return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch (e) { return false; } }
+function fidErr(e) { const n = e && e.name; return n === "NotAllowedError" ? "Face ID cancelado ou bloqueado aqui. Tente de novo ou use a frase." : n === "SecurityError" ? "Este endereço não permite Face ID (ex.: dentro do Claude). Use a frase." : "Face ID indisponível: " + (e && e.message ? e.message : e); }
+async function fidCreate() {
+  const id = crypto.getRandomValues(new Uint8Array(16));
+  const c = await navigator.credentials.create({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: "DermIA" }, user: { id, name: "dermia", displayName: "DermIA" },
+    pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }], authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged" }, timeout: 60000, attestation: "none" } });
+  await kvSet("fid", new Uint8Array(c.rawId));
+}
+async function fidGet() {
+  const raw = await kvGet("fid");
+  await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: [{ type: "public-key", id: raw, transports: ["internal"] }], userVerification: "required", timeout: 60000 } });
+}
+let unlockWait = null;
+function lockScreen() {
+  show($("lock"), true); show($("modelo"), false);
+  return new Promise(res => {
+    unlockWait = res;
+    const go = async () => { $("lock-msg").textContent = ""; try { await fidGet(); show($("lock"), false); res(); } catch (e) { $("lock-msg").textContent = fidErr(e); show($("lock-alt"), true); } };
+    $("btn-fid").onclick = go; go();
+  });
+}
+$("lock-pass").onclick = () => { show($("lock-alt"), true); $("lock-pw").focus(); };
+$("lock-go").onclick = async () => { const v = await kvGet("pwcheck").catch(() => null); if (v && v === await pwCheck($("lock-pw").value.trim())) { show($("lock"), false); unlockWait && unlockWait(); } else $("lock-msg").textContent = "Frase incorreta."; };
+$("lock-reset").onclick = async () => { if (!confirm("Apagar o modelo e o Face ID deste aparelho? Você vai precisar da frase para instalar de novo.")) return; try { const d = await idb(); const os = d.transaction("kv", "readwrite").objectStore("kv"); ["model", "model_sha", "fid", "pwcheck"].forEach(k => os.delete(k)); } catch (x) {} location.reload(); };
+async function offerFid() {
+  if (await kvGet("fid").catch(() => null) || !(await fidAvailable()) || await kvGet("fid_no").catch(() => null)) return;
+  show($("fid-offer"), true);
+  $("fid-on").onclick = async () => { try { await fidCreate(); show($("fid-offer"), false); $("st").textContent = "Face ID ativado neste aparelho."; refreshFidLink(); } catch (e) { $("fid-msg").textContent = fidErr(e); } };
+  $("fid-later").onclick = async () => { show($("fid-offer"), false); try { await kvSet("fid_no", 1); } catch (e) {} refreshFidLink(); };
+}
+async function refreshFidLink() {
+  const on = !!(await kvGet("fid").catch(() => null)), a = $("fid-toggle"), st = $("fid-state");
+  if (!(await fidAvailable())) { st.textContent = "indisponível aqui"; a.onclick = () => { $("st").textContent = "Face ID só funciona no endereço próprio do app, aberto pelo ícone da tela de início."; }; return; }
+  st.textContent = on ? "ligado · tocar para desligar" : "desligado · tocar para ligar";
+  a.onclick = async e => { e.preventDefault(); try { if (on) { const d = await idb(); d.transaction("kv", "readwrite").objectStore("kv").delete("fid"); $("st").textContent = "Face ID desativado."; } else { await fidCreate(); $("st").textContent = "Face ID ativado neste aparelho."; } } catch (x) { $("st").textContent = fidErr(x); } refreshFidLink(); };
+}
+async function boot() {
+  try { await loadData(); } catch (e) { $("m-status").textContent = "Erro ao carregar os dados do app: " + e.message; return; }
+  let bytes = null, sha = null; try { sha = await kvGet("model_sha"); if (sha === MODEL.model_sha) bytes = await kvGet("model"); } catch (e) {}
+  if (sha && sha !== MODEL.model_sha) $("m-msg").textContent = "O modelo foi atualizado: instale de novo (mesma frase de acesso).";
+  if (bytes) {
+    if (await kvGet("fid").catch(() => null)) await lockScreen();
+    show($("modelo"), true); try { await makeSession(bytes); ready(); refreshFidLink(); return; } catch (e) { console.log(e); }
+  }
+  show($("m-status"), false); show($("m-install"), true);
+}
+function ready() { renderAcc(); $("ver").textContent = APP_VER + " · modelo " + MODEL.model_sha.slice(0, 7); show($("modelo"), false); show($("entrada"), true); $("nb").textContent = BANK.n; }
+$("rm").onclick = async e => { e.preventDefault(); try { const d = await idb(); const os = d.transaction("kv", "readwrite").objectStore("kv"); ["model", "model_sha", "fid", "pwcheck"].forEach(k => os.delete(k)); } catch (x) {} location.reload(); };
+
+function b64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+async function installFromSite() {
+  const pw = $("pw").value.trim(); if (!pw) { $("m-msg").textContent = "Digite a frase de acesso."; return; }
+  $("btn-install").disabled = true; show($("prog"), true); const bar = $("prog").firstElementChild;
+  try {
+    $("m-msg").textContent = "Lendo o manifesto…";
+    const man = await (await fetch("model/manifest.json", { cache: "no-store" })).json();
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+    const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(man.salt), iterations: man.iter, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    const out = new Uint8Array(man.total); let off = 0, n = 0;
+    for (const c of man.chunks) {
+      $("m-msg").textContent = "Baixando parte " + (n + 1) + " de " + man.chunks.length + "…";
+      const buf = await (await fetch("model/" + c.f, { cache: "no-store" })).arrayBuffer();
+      let plain;
+      try { plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(buf, 0, 12) }, key, new Uint8Array(buf, 12)); }
+      catch (e) { throw new Error("Frase incorreta."); }
+      out.set(new Uint8Array(plain), off); off += plain.byteLength; n++; bar.style.width = (100 * n / man.chunks.length) + "%";
+    }
+    const h = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", out))).map(x => x.toString(16).padStart(2, "0")).join("");
+    if (h !== man.sha256) throw new Error("Arquivo corrompido, tente de novo.");
+    $("m-msg").textContent = "Guardando no aparelho…";
+    try { await kvSet("model", out); await kvSet("model_sha", man.sha256); if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { console.log("sem armazenamento local", e); $("st").textContent = "Aviso: este aparelho não guardou o modelo; vai pedir a instalação de novo na próxima vez."; }
+    try { await kvSet("pwcheck", await pwCheck(pw)); } catch (e) {}
+    await makeSession(out); ready(); offerFid(); refreshFidLink();
+  } catch (e) { $("m-msg").textContent = "Erro: " + e.message; $("btn-install").disabled = false; show($("prog"), false); }
+}
+async function installFromFile(ev) {
+  const f = ev.target.files[0]; if (!f) return; $("m-msg").textContent = "Lendo o arquivo…";
+  try { const bytes = new Uint8Array(await f.arrayBuffer()); const h = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))).map(x => x.toString(16).padStart(2, "0")).join("");
+    if (h !== MODEL.model_sha) throw new Error("este não é o arquivo de modelo desta versão do app");
+    await makeSession(bytes); try { await kvSet("model", bytes); await kvSet("model_sha", h); } catch (e) {} ready(); }
+  catch (e) { $("m-msg").textContent = "Arquivo inválido: " + e.message; }
+}
+$("btn-install").onclick = installFromSite; $("file-model").onchange = installFromFile;
+
+/* ---------- pré-processamento: mesmo algoritmo do treino (bicúbico com antialias do Pillow, lado menor 224, recorte central) ---------- */
+function bic(x) { x = Math.abs(x); return x < 1 ? (1.5 * x - 2.5) * x * x + 1 : x < 2 ? (((x - 5) * x + 8) * x - 4) * -0.5 : 0; }
+function coeffs(inSize, outSize) {
+  const scale = inSize / outSize, fs = Math.max(scale, 1), sup = 2 * fs, res = new Array(outSize);
+  for (let xx = 0; xx < outSize; xx++) {
+    const c = (xx + 0.5) * scale; let x0 = Math.floor(c - sup + 0.5); if (x0 < 0) x0 = 0; let x1 = Math.floor(c + sup + 0.5); if (x1 > inSize) x1 = inSize;
+    const n = x1 - x0, w = new Float64Array(n); let sum = 0; for (let x = 0; x < n; x++) { w[x] = bic((x + x0 - c + 0.5) / fs); sum += w[x]; }
+    for (let x = 0; x < n; x++) { const k = w[x] / sum * 4194304; w[x] = k < 0 ? Math.ceil(k - 0.5) : Math.floor(k + 0.5); } res[xx] = [x0, w];   // coeficientes inteiros (22 bits), como no Pillow
+  }
+  return res;
+}
+function resizeRGB(src, w, h, tw, th) {           // src: RGBA Uint8ClampedArray -> RGB Uint8ClampedArray (tw x th); passo horizontal, depois vertical
+  const cx = coeffs(w, tw), cy = coeffs(h, th), mid = new Uint8ClampedArray(h * tw * 3), out = new Uint8ClampedArray(th * tw * 3);
+  for (let y = 0; y < h; y++) for (let x = 0; x < tw; x++) { const x0 = cx[x][0], k = cx[x][1]; let r = 0, g = 0, b = 0; for (let i = 0; i < k.length; i++) { const o = (y * w + x0 + i) * 4, c = k[i]; r += src[o] * c; g += src[o + 1] * c; b += src[o + 2] * c; } const o = (y * tw + x) * 3; mid[o] = Math.floor((r + 2097152) / 4194304); mid[o + 1] = Math.floor((g + 2097152) / 4194304); mid[o + 2] = Math.floor((b + 2097152) / 4194304); }
+  for (let y = 0; y < th; y++) { const y0 = cy[y][0], k = cy[y][1]; for (let x = 0; x < tw; x++) { let r = 0, g = 0, b = 0; for (let i = 0; i < k.length; i++) { const o = ((y0 + i) * tw + x) * 3, c = k[i]; r += mid[o] * c; g += mid[o + 1] * c; b += mid[o + 2] * c; } const o = (y * tw + x) * 3; out[o] = Math.floor((r + 2097152) / 4194304); out[o + 1] = Math.floor((g + 2097152) / 4194304); out[o + 2] = Math.floor((b + 2097152) / 4194304); } }
+  return out;
+}
+function roundEven(x) { const r = Math.round(x); return (Math.abs(x % 1) === 0.5 && r % 2) ? r - 1 : r; }
+async function decodeImage(file) {               // devolve { data RGBA, w, h, canvas } com fotos grandes reduzidas pela metade até <= 1024 px
+  let bmp, url = null; try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); }
+  catch (e) { url = URL.createObjectURL(file); bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error("não consegui abrir a imagem")); im.src = url; }); }
+  let w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight; if (!w || !h) throw new Error("imagem vazia");
+  if (Math.min(w, h) < 224) throw new Error("imagem pequena demais (menor que 224 px)");
+  let src = bmp;
+  while (Math.max(w, h) > 1024 && Math.min(w, h) >= 448) { const c = document.createElement("canvas"); c.width = Math.floor(w / 2); c.height = Math.floor(h / 2); const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(src, 0, 0, c.width, c.height); src = c; w = c.width; h = c.height; }
+  const c0 = document.createElement("canvas"); c0.width = w; c0.height = h; const g0 = c0.getContext("2d", { willReadFrequently: true }); g0.drawImage(src, 0, 0, w, h);
+  const data = g0.getImageData(0, 0, w, h).data; if (url) URL.revokeObjectURL(url); if (bmp.close) bmp.close();
+  return { data, w, h, canvas: c0 };
+}
+function otsu(vals) { const hst = new Float64Array(256); vals.forEach(v => hst[Math.min(255, Math.max(0, v | 0))]++); const n = vals.length; let w = 0, m = 0, mt = 0; for (let i = 0; i < 256; i++) mt += i * hst[i] / n;
+  let best = 0, bi = 0; for (let i = 0; i < 256; i++) { w += hst[i] / n; m += i * hst[i] / n; if (w <= 0 || w >= 1) continue; const v = (mt * w - m) ** 2 / (w * (1 - w)); if (v > best) { best = v; bi = i; } } return bi; }
+function autoBox(dec) {                           // mesma lógica do treino (autocrop.py): lesão = componente escuro central (Otsu), quadrado com margem 1,35
+  const W = dec.w, H = dec.h, sc = 256 / Math.max(W, H), w = Math.max(1, Math.round(W * sc)), h = Math.max(1, Math.round(H * sc));
+  const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(dec.canvas, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data, N = w * h, L = new Float32Array(N);
+  for (let i = 0; i < N; i++) L[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+  const valid = new Uint8Array(N).fill(1), st = [];                       // tira a moldura preta do dermatoscópio (escuro ligado à borda)
+  for (let x = 0; x < w; x++) st.push(x, (h - 1) * w + x); for (let y = 0; y < h; y++) st.push(y * w, y * w + w - 1);
+  while (st.length) { const i = st.pop(); if (!valid[i] || L[i] >= 35) continue; valid[i] = 0; const x = i % w, y = (i / w) | 0; if (x > 0) st.push(i - 1); if (x < w - 1) st.push(i + 1); if (y > 0) st.push(i - w); if (y < h - 1) st.push(i + w); }
+  let nv = 0; const vv = []; for (let i = 0; i < N; i++) if (valid[i]) { nv++; vv.push(L[i]); } if (nv < 0.2 * N) return null;
+  const t = otsu(vv); let m = new Uint8Array(N); for (let i = 0; i < N; i++) m[i] = valid[i] && L[i] < t ? 1 : 0;
+  const morph = (a, er) => { const o = new Uint8Array(N); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, nb = [x > 0 ? a[i - 1] : 0, x < w - 1 ? a[i + 1] : 0, y > 0 ? a[i - w] : 0, y < h - 1 ? a[i + w] : 0];
+    o[i] = er ? (a[i] && nb.every(Boolean) ? 1 : 0) : (a[i] || nb.some(Boolean) ? 1 : 0); } return o; };
+  m = morph(morph(m, 1), 1); m = morph(morph(m, 0), 0);
+  const lab = new Int32Array(N); let n = 0, best = -1, bk = 0; const comps = [], cy = h / 2, cx = w / 2, sig = 0.35 * Math.min(w, h);
+  for (let i = 0; i < N; i++) { if (!m[i] || lab[i]) continue; n++; let a = 0, sy = 0, sx = 0, x0 = w, x1 = 0, y0 = h, y1 = 0; const q = [i]; lab[i] = n;
+    while (q.length) { const j = q.pop(), x = j % w, y = (j / w) | 0; a++; sx += x; sy += y; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (const k of [x > 0 ? j - 1 : -1, x < w - 1 ? j + 1 : -1, y > 0 ? j - w : -1, y < h - 1 ? j + w : -1]) if (k >= 0 && m[k] && !lab[k]) { lab[k] = n; q.push(k); } }
+    const sco = a * Math.exp(-(((sy / a) - cy) ** 2 + ((sx / a) - cx) ** 2) / (2 * sig * sig)); comps.push({ a, x0, x1: x1 + 1, y0, y1: y1 + 1 }); if (sco > best) { best = sco; bk = comps.length - 1; } }
+  if (!comps.length) return null; const k = comps[bk], frac = k.a / nv; if (frac < 0.01 || frac > 0.85) return null;
+  let side = Math.max(k.x1 - k.x0, k.y1 - k.y0) * 1.35; side = Math.max(side, 0.30 * Math.min(w, h)); side = Math.min(side, Math.min(w, h));
+  const mx = (k.x0 + k.x1) / 2, my = (k.y0 + k.y1) / 2, bx = Math.min(Math.max(mx - side / 2, 0), w - side), by = Math.min(Math.max(my - side / 2, 0), h - side);
+  let S = Math.min(Math.round(side / sc), W, H), X = Math.round(bx / sc), Y = Math.round(by / sc); X = Math.min(Math.max(X, 0), W - S); Y = Math.min(Math.max(Y, 0), H - S); return { x: X, y: Y, s: S };
+}
+function centerBox(dec) { const S = Math.min(dec.w, dec.h); return { x: Math.floor((dec.w - S) / 2), y: Math.floor((dec.h - S) / 2), s: S }; }
+function makeCrop(dec, b) {                       // recorte final 224x224 (bicúbico igual ao treino); sem caixa = lado menor 224 + centro
+  let rgb;
+  if (!b) { const { data, w, h } = dec, tw = w <= h ? 224 : Math.floor(224 * w / h), th = w <= h ? Math.floor(224 * h / w) : 224, full = resizeRGB(data, w, h, tw, th);
+    const left = roundEven((tw - 224) / 2), top = roundEven((th - 224) / 2); rgb = new Uint8ClampedArray(224 * 224 * 3);
+    for (let y = 0; y < 224; y++) rgb.set(full.subarray(((y + top) * tw + left) * 3, ((y + top) * tw + left + 224) * 3), y * 224 * 3); }
+  else { const S = b.s, reg = new Uint8ClampedArray(S * S * 4); for (let y = 0; y < S; y++) reg.set(dec.data.subarray(((b.y + y) * dec.w + b.x) * 4, ((b.y + y) * dec.w + b.x + S) * 4), y * S * 4); rgb = resizeRGB(reg, S, S, 224, 224); }
+  const canvas = document.createElement("canvas"); canvas.width = 224; canvas.height = 224; const id = new ImageData(224, 224);
+  for (let i = 0; i < 224 * 224; i++) { id.data[i * 4] = rgb[i * 3]; id.data[i * 4 + 1] = rgb[i * 3 + 1]; id.data[i * 4 + 2] = rgb[i * 3 + 2]; id.data[i * 4 + 3] = 255; }
+  canvas.getContext("2d").putImageData(id, 0, 0); return { rgb, canvas };
+}
+function toTensor(rgb, view) {                    // view: "id" ou "h" (espelhada)
+  const m = [0.48145466, 0.4578275, 0.40821073], sd = [0.26862954, 0.26130258, 0.27577711], a = new Float32Array(3 * 224 * 224), flip = view === "h";
+  for (let y = 0; y < 224; y++) for (let x = 0; x < 224; x++) { const s = (y * 224 + (flip ? 223 - x : x)) * 3, d = y * 224 + x; for (let k = 0; k < 3; k++) a[k * 50176 + d] = (rgb[s + k] / 255 - m[k]) / sd[k]; }
+  return new ort.Tensor("float32", a, [1, 3, 224, 224]);
+}
+
+/* ---------- cálculo: probabilidades, detector, mapa, vizinhos ---------- */
+function feats(tok) {                             // 196x768 -> média global + média de cada quadrante (5 x 768)
+  const D = 768, f = new Float64Array(5 * D);
+  for (let i = 0; i < 196; i++) { const q = (((i / 14) | 0) < 7 ? 0 : 2) + (i % 14 < 7 ? 0 : 1), o = i * D, qo = (1 + q) * D; for (let j = 0; j < D; j++) { const v = tok[o + j]; f[j] += v; f[qo + j] += v; } }
+  for (let j = 0; j < D; j++) f[j] /= 196; for (let j = D; j < 5 * D; j++) f[j] /= 49; return f;
+}
+function headLogits(f) { const K = MODEL.names.length, D = MODEL.D, L = new Float64Array(K); for (let k = 0; k < K; k++) { let s = MODEL.b[k]; const o = k * D; for (let j = 0; j < D; j++) s += W[o + j] * f[j]; L[k] = s; } return L; }
+function softmax(L, T) { const z = Array.from(L, x => x / T), mx = Math.max(...z), e = z.map(x => Math.exp(x - mx)), s = e.reduce((a, b) => a + b, 0); return e.map(x => x / s); }
+function nonDerm(emb) { const d = HEAD.det; let s = d.intercept; for (let j = 0; j < 512; j++) s += d.coef[j] * (emb[j] - d.mean[j]) / d.scale[j]; return 1 / (1 + Math.exp(-s)); }
+function heatFor(k) {                             // contribuição exata de cada quadrado ao logit do diagnóstico k (média das vistas, desfazendo o espelho)
+  if (LAST.hc[k]) return LAST.hc[k]; const D = 768, o = k * MODEL.D, out = new Float64Array(196), u = new Float64Array(D);
+  for (let q = 0; q < 4; q++) { for (let j = 0; j < D; j++) u[j] = W[o + j] / 196 + W[o + (1 + q) * D + j] / 49;
+    for (const v of LAST.toks) for (let i = 0; i < 196; i++) { const r = (i / 14) | 0, c = i % 14; if (((r < 7 ? 0 : 2) + (c < 7 ? 0 : 1)) !== q) continue; let d = 0; const t = i * D; for (let j = 0; j < D; j++) d += v.tok[t + j] * u[j]; out[r * 14 + (v.view === "h" ? 13 - c : c)] += d / LAST.toks.length; } }
+  return (LAST.hc[k] = out);
+}
+function neighbors(emb, K) {
+  let n2 = 0; for (let j = 0; j < 512; j++) n2 += emb[j] * emb[j]; n2 = Math.sqrt(n2);
+  const N = BANK.n, sims = new Float32Array(N);
+  for (let i = 0; i < N; i++) { let s = 0; const o = i * 512; for (let j = 0; j < 512; j++) s += BANKV[o + j] * emb[j]; sims[i] = s / 127 / n2; }
+  const idx = Array.from({ length: N }, (_, i) => i).sort((a, b) => sims[b] - sims[a]).slice(0, K); return idx.map(i => ({ i, s: sims[i] }));
+}
+
+/* ---------- desenho ---------- */
+let curClass = 0, showHeat = true;
+function drawHeat() {
+  const hc = $("cv-heat"), g = hc.getContext("2d"); g.clearRect(0, 0, 448, 448);
+  if (!showHeat || !LAST) return;
+  let mx = 1e-9; LAST.order.slice(0, 4).forEach(k => heatFor(k).forEach(v => { mx = Math.max(mx, Math.abs(v)); }));   // mesma escala para os 4 botões
+  const vals = heatFor(curClass), sm = document.createElement("canvas"); sm.width = 14; sm.height = 14; const sg = sm.getContext("2d"), id = sg.createImageData(14, 14);
+  for (let i = 0; i < 196; i++) { const v = vals[i] / mx, a = Math.min(1, Math.pow(Math.abs(v), 0.8)) * 0.78, c = v >= 0 ? [232, 101, 10] : [60, 130, 255]; id.data[i * 4] = c[0]; id.data[i * 4 + 1] = c[1]; id.data[i * 4 + 2] = c[2]; id.data[i * 4 + 3] = Math.round(a * 255); }
+  sg.putImageData(id, 0, 0); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high"; g.drawImage(sm, 0, 0, 448, 448);
+}
+function renderChips(order) {
+  const box = $("heat-chips"); box.innerHTML = "";
+  order.slice(0, 4).forEach(k => { const b = document.createElement("button"); b.className = "chip" + (k === curClass ? " on" : ""); b.textContent = HF.names[k] + " " + Math.round(LAST.probs[k] * 100) + "%"; b.onclick = () => { curClass = k; renderChips(order); drawHeat(); }; box.appendChild(b); });
+}
+function groupProbs(p) { const g = new Array(HEAD.names.length).fill(0); p.forEach((x, k) => { g[HEAD.names.indexOf(HF.groups[k])] += x; }); return g; }
+function renderProbs(order, p) {
+  const box = $("probs"); box.innerHTML = "";
+  const top = order[0]; $("chute").innerHTML = '<span class="eyebrow">Melhor chute do modelo</span><div class="verdict">' + esc(HF.names[top]) + '</div><div class="vmeta"><span class="pill">' + Math.round(p[top] * 100) + '%</span><span>grupo: ' + esc(HEAD.pt[HEAD.names.indexOf(HF.groups[top])]) + '</span><span>· 2º ' + esc(HF.names[order[1]]) + ' ' + Math.round(p[order[1]] * 100) + '%</span></div>';
+  order.forEach((k, r) => { const row = document.createElement("div"); row.className = "prow" + (r === 0 ? " top" : "") + (HF.names[k].startsWith("Outras raras") ? " dim" : "") + (r >= 8 ? " more hide" : "");
+    const pc = Math.round(p[k] * 100); row.innerHTML = '<span class="rk">' + (r + 1) + '</span><span class="n">' + esc(HF.names[k]) + '</span><span class="v">' + (p[k] < 0.01 ? "<1" : pc) + '%</span><div class="bar"><i style="width:' + Math.max(1, p[k] * 100) + '%"></i></div>'; box.appendChild(row); });
+  $("showall").textContent = "Mostrar todos os " + order.length; $("showall").classList.remove("hide");
+  const g = groupProbs(p), go = g.map((v, k) => k).sort((a, b) => g[b] - g[a]); const GC = ["#E8650A", "#C4A060", "#3C82FF", "#6FCF97", "#B07CE0", "#FF6B5B", "#4FC3C9", "#E0C341", "#8A847A"];
+  $("groups").innerHTML = '<div class="stack">' + go.filter(k => g[k] >= 0.005).map((k, r) => '<i style="width:' + (g[k] * 100) + '%;background:' + GC[r] + '"></i>').join("") + '</div><div class="leg">' + go.filter(k => g[k] >= 0.01).slice(0, 6).map((k, r) => '<span><i class="sw" style="background:' + GC[r] + '"></i>' + esc(HEAD.pt[k]) + ' <b>' + Math.round(g[k] * 100) + '%</b></span>').join("") + '</div>';
+  const lc = $("lowconf");
+  if (p[top] < 0.3) { lc.textContent = "Chute de baixa confiança (primeiro lugar abaixo de 30%): com tantos diagnósticos na lista, é normal ficar assim. Olhe os 5 primeiros, o grupo e os casos parecidos."; show(lc, true); } else show(lc, false);
+}
+const CONFPT = {"single contributor clinical assessment": "avaliação clínica (sem biópsia)", "single image expert consensus": "consenso de especialistas (sem biópsia)"};
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+const TBUF = {}, TURL = {};
+async function thumbURL(it) {
+  if (!it.t) return null; if (TURL[it.id]) return TURL[it.id]; const [ch, off, len] = it.t, u = "thumbs/t" + ch + ".bin";
+  try {
+    let buf = null;
+    if (TBUF[ch]) buf = (await TBUF[ch]).slice(off, off + len);
+    else {
+      let hit = null; try { hit = self.caches ? await caches.match(u) : null; } catch (e) {}
+      if (hit) { TBUF[ch] = hit.arrayBuffer(); buf = (await TBUF[ch]).slice(off, off + len); }
+      else { let r = await fetch(u, { headers: { Range: "bytes=" + off + "-" + (off + len - 1) } }).catch(() => null); if (!r || !r.ok) r = await fetch(u); if (!r.ok) return null;   // sem suporte a faixa: baixa o bloco inteiro
+        if (r.status === 206) buf = await r.arrayBuffer(); else { TBUF[ch] = r.arrayBuffer(); buf = (await TBUF[ch]).slice(off, off + len); } }
+    }
+    return (TURL[it.id] = URL.createObjectURL(new Blob([buf], { type: "image/jpeg" })));
+  } catch (x) { return null; }
+}
+function renderNeigh(nn, ctx) {
+  const box = $("neigh"); box.innerHTML = ""; const K = HF.names.length, vote = new Array(K).fill(0);
+  nn.forEach(({ i, s }) => { const f = BANK.items[i].f; if (f >= 0) vote[f] += Math.max(0, s); });
+  nn.slice(0, 8).forEach(({ i, s }) => {
+    const it = BANK.items[i], d = document.createElement("div"), dx = it.f >= 0 ? HF.names[it.f] : it.dx; d.className = "cs";
+    const th = "https://isic-archive.s3.us-east-1.amazonaws.com/thumbnails/" + it.id + "_thumbnail.jpg", full = "https://isic-archive.s3.us-east-1.amazonaws.com/images/" + it.id + ".jpg";
+    const hist = /^histopath/i.test(it.conf || "") ? '<span class="tag ok">histopatologia</span>' : '<span class="tag bad">' + (it.conf && !/^histopath/i.test(it.conf) ? esc(CONFPT[it.conf] || it.conf) : "sem histopatologia informada") + '</span>';
+    d.innerHTML = '<img alt="' + esc(dx) + '"><div><div class="dx">' + esc(dx) + '</div><div class="mt">semelhança ' + Math.round(s * 100) + '%</div>' + hist + (it.est ? '<span class="tag">estudo</span>' : '') + ((normSite(it.site) || it.age || normSex(it.sex)) ? '<div class="mt">' + [SITEPT[normSite(it.site)], it.age ? it.age + " anos" : null, normSex(it.sex) === "M" ? "masc." : normSex(it.sex) === "F" ? "fem." : null].filter(Boolean).join(" · ") + '</div>' : '') +
+      '<div class="mt">' + esc(it.id) + ' · ' + esc(it.lic) + (it.at ? " · " + esc(it.at) : "") + '</div></div>';
+    const im = d.querySelector("img"); thumbURL(it).then(u => { im.src = u || th; }); im.onerror = () => { if (im.src !== th) im.src = th; };
+    im.onclick = async () => { const u = await thumbURL(it); $("ovi").onerror = () => { if (u) $("ovi").src = u; }; $("ovi").src = full; show($("ov"), true); }; box.appendChild(d); });
+  const tot = vote.reduce((a, b) => a + b, 0) || 1, ord = vote.map((v, k) => [v, k]).sort((a, b) => b[0] - a[0]).filter(x => x[0] > 0).slice(0, 3);
+  $("votes").textContent = "Entre os " + nn.length + " mais parecidos: " + ord.map(([v, k]) => HF.names[k] + " " + Math.round(100 * v / tot) + "%").join(" · ");
+}
+$("ov").onclick = () => show($("ov"), false);
+$("sg-orig").onclick = () => { showHeat = false; $("sg-orig").classList.add("on"); $("sg-heat").classList.remove("on"); drawHeat(); };
+$("sg-heat").onclick = () => { showHeat = true; $("sg-heat").classList.add("on"); $("sg-orig").classList.remove("on"); drawHeat(); };
+
+
+/* ---------- contexto clínico ---------- */
+const REG = [["", "Não informar", null], ["Couro cabeludo", "Couro cabeludo", "Head and neck"], ["Face", "Face", "Head and neck"], ["Pescoço", "Pescoço", "Head and neck"], ["Tórax e mama", "Tórax e mama", "Trunk"], ["Abdome", "Abdome", "Trunk"], ["Dorso", "Dorso e lombar", "Trunk"], ["Braço, antebraço, dorso da mão", "Membro superior", "Upper extremity"], ["Coxa, perna, dorso do pé", "Membro inferior", "Lower extremity"], ["Palma ou planta", "Palma ou planta", "palmas/plantas"], ["Unha", "Unha (sem ajuste)", null], ["Genital ou mucosa", "Genital ou mucosa (sem ajuste)", null]];
+REG.forEach((r, i) => { const o = document.createElement("option"); o.value = i; o.textContent = r[1]; $("c-reg").appendChild(o); });
+const SITEPT = { "Head and neck": "cabeça e pescoço", "Trunk": "tronco", "Upper extremity": "membro superior", "Lower extremity": "membro inferior", "palmas/plantas": "palma/planta" };
+function normSite(x) { x = (x || "").toLowerCase(); if (x.startsWith("head") || x.startsWith("cabe")) return "Head and neck"; if (x.startsWith("trunk") || x.startsWith("tronco")) return "Trunk"; if (x.startsWith("upper") || x === "membro superior") return "Upper extremity"; if (x.startsWith("lower") || x === "membro inferior") return "Lower extremity"; if (x.startsWith("palm")) return "palmas/plantas"; return null; }
+function normSex(x) { x = (x || "").toString().toLowerCase(); return x === "m" || x === "male" ? "M" : (x === "f" || x === "female" ? "F" : null); }
+function ageBin(a) { a = Number(a); if (!(a > 0)) return null; return a < 30 ? "<30" : a < 45 ? "30-44" : a < 60 ? "45-59" : a < 75 ? "60-74" : "75+"; }
+let TAB = null;
+function priorsTable() {
+  if (TAB) return TAB; const K = HF.names.length; TAB = { site: {}, age: {}, sex: {}, nk: { site: Array(K).fill(0), age: Array(K).fill(0), sex: Array(K).fill(0) } };
+  const add = (dim, v, k) => { if (!v) return; (TAB[dim][v] = TAB[dim][v] || Array(K).fill(0))[k]++; TAB.nk[dim][k]++; };
+  BANK.items.forEach(it => { if (it.f < 0) return; add("site", normSite(it.site), it.f); add("age", ageBin(it.age), it.f); add("sex", normSex(it.sex), it.f); }); return TAB;
+}
+function factor(dim, v, k) { const T = priorsTable(), nv = Object.keys(T[dim]).length || 1; const c = (T[dim][v] || [])[k] || 0; return (c + 1) / (T.nk[dim][k] + nv); }
+function getCtx() {
+  const g = id => $(id).value, chk = id => Array.from(document.querySelectorAll("#" + id + " input:checked")).map(i => i.value), r = REG[+g("c-reg") || 0];
+  const c = { regLabel: r[0], site: r[2], regSel: !!r[0], idade: g("c-idade") ? +g("c-idade") : null, sexo: g("c-sexo") || null, fito: g("c-fito") || null, tempo: g("c-tempo"), t0: g("c-t0") ? +g("c-t0") : null, t1: g("c-t1") ? +g("c-t1") : null, evo: chk("ck-evo"), sint: chk("ck-sint"), hist: chk("ck-hist"), obs: g("c-obs").trim() };
+  c.any = !!(c.regSel || c.idade || c.sexo || c.fito || c.tempo || c.t0 || c.t1 || c.evo.length || c.sint.length || c.hist.length || c.obs); return c;
+}
+function adjust(p, c) {
+  const used = [], f = Array(p.length).fill(1);
+  const dims = [["site", c.site, c.site ? "região (" + SITEPT[c.site] + ")" : null], ["age", ageBin(c.idade), c.idade ? "idade" : null], ["sex", c.sexo, c.sexo ? "sexo" : null]];
+  dims.forEach(([d, v, lab]) => { if (!v || !lab) return; const al = (MODEL.ctx && MODEL.ctx.alpha && MODEL.ctx.alpha[d] != null) ? MODEL.ctx.alpha[d] : 1; if (!(al > 0)) return; used.push(lab); for (let k = 0; k < p.length; k++) f[k] *= Math.pow(factor(d, v, k), al); });
+  if (!used.length) return { q: p, used }; const q = p.map((x, k) => x * f[k]), s = q.reduce((a, b) => a + b, 0); return { q: q.map(x => x / s), used };
+}
+function mesesTxt(m) { return m === 0 ? "desde o nascimento" : m < 1 ? "menos de 1 mês" : m < 12 ? Math.round(m) + " meses" : (m / 12).toFixed(1).replace(".0", "") + " anos"; }
+function flagsFor(c) {
+  const F = [], add = (l, t) => F.push([l, t]), has = (a, v) => a.includes(v), grew = has(c.evo, "cresceu") || (c.t0 != null && c.t1 != null && c.t1 > c.t0), change = has(c.evo, "cor") || has(c.evo, "forma");
+  if (c.t1 != null && c.t1 >= 6) add("lo", "Diâmetro de " + c.t1 + " mm (≥ 6 mm é o D do ABCDE; não define malignidade).");
+  if (c.t0 != null && c.t1 != null && c.t1 > c.t0) { const dm = c.t1 - c.t0, m = c.tempo !== "" ? +c.tempo : null; add(dm / (c.t0 || 1) >= 0.5 ? "hi" : "lo", "Cresceu " + dm + " mm" + (m ? " em cerca de " + mesesTxt(m) + " (≈ " + (dm / m).toFixed(1) + " mm/mês)" : "") + "."); }
+  if (change) add("hi", "Mudança de cor ou forma (E do ABCDE): evolução é o sinal mais forte para lesão melanocítica suspeita."); else if (has(c.evo, "cresceu")) add("hi", "Crescimento relatado: pesa a favor de neoplasia; compare com a dermatoscopia.");
+  if (has(c.evo, "nova") && c.idade >= 50) add("hi", "Lesão nova após os 50 anos: mais suspeita que um nevo antigo estável.");
+  if (has(c.sint, "elevada") && has(c.sint, "firme") && grew) add("hi", "Elevada, firme e crescendo (EFG): considerar melanoma nodular mesmo sem pigmento.");
+  if (has(c.sint, "sangra") || has(c.sint, "ferida")) add("hi", "Sangra ou ferida que não cicatriza: pensar em CBC ou CEC; considerar biópsia.");
+  if (has(c.sint, "crosta")) add("lo", "Crosta persistente: ceratose actínica, CEC ou CBC ulcerado entram no diferencial.");
+  if (has(c.sint, "patinho")) add("hi", "Sinal do patinho feio: diferente das outras lesões do paciente.");
+  if (has(c.sint, "coceira") || has(c.sint, "dor")) add("lo", "Coceira ou dor: inespecífico (comum em queratose seborreica irritada, ceratose actínica, CEC).");
+  if (has(c.hist, "ca_pele") || has(c.hist, "fam_mel") || has(c.hist, "imuno")) add("hi", "Fator de risco elevado (câncer de pele prévio, melanoma na família ou imunossupressão): limiar menor para biópsia e seguimento.");
+  if (has(c.hist, "sol") || has(c.hist, "muitos_nevos")) add("lo", "Sol intenso, queimaduras ou muitos nevos: aumenta o risco basal.");
+  if (c.site === "palmas/plantas" || c.regLabel === "Unha") add("hi", "Região acral ou unha: melanoma acral e subungueal são subdiagnosticados; leia o padrão dos sulcos e das cristas e não confie só no modelo.");
+  if (c.fito === "V" || c.fito === "VI") add("hi", "Fototipo " + c.fito + ": o modelo e o banco quase não têm pele escura; trate o resultado com ainda menos peso.");
+  if (c.idade != null && c.idade < 18) add("lo", "Paciente abaixo de 18 anos: o banco tem poucos casos pediátricos.");
+  if (c.regLabel === "Genital ou mucosa") add("lo", "Mucosa e genital: o banco quase não tem esses locais; sem ajuste por região.");
+  return F;
+}
+function ctxSummary(c) {
+  const a = []; if (c.regSel) a.push(c.regLabel); if (c.idade) a.push(c.idade + " anos"); if (c.sexo) a.push(c.sexo === "M" ? "masculino" : "feminino"); if (c.fito) a.push("fototipo " + c.fito);
+  if (c.t0 != null || c.t1 != null) a.push("tamanho " + (c.t0 != null ? c.t0 : "?") + " → " + (c.t1 != null ? c.t1 : "?") + " mm"); if (c.tempo !== "") a.push("há " + mesesTxt(+c.tempo));
+  const nm = { cresceu: "cresceu", cor: "mudou de cor", forma: "mudou de forma", nova: "lesão nova", estavel: "estável", coceira: "coceira", dor: "dor", sangra: "sangra", ferida: "ferida que não cicatriza", crosta: "crosta", elevada: "elevada", firme: "firme", patinho: "patinho feio", ca_pele: "câncer de pele prévio", fam_mel: "melanoma na família", sol: "muito sol", imuno: "imunossupressão", muitos_nevos: "muitos nevos" };
+  [...c.evo, ...c.sint, ...c.hist].forEach(x => a.push(nm[x])); if (c.obs) a.push("obs.: " + c.obs); return a.join(" · ");
+}
+let useCtx = true;
+function applyView() {
+  const c = LAST.ctx, canAdj = LAST.used.length > 0, p = (useCtx && canAdj) ? LAST.pCtx : LAST.pImg, order = p.map((v, k) => k).sort((a, b) => p[b] - p[a]);
+  LAST.probs = p; LAST.order = order; curClass = order[0]; renderProbs(order, p); renderChips(order); drawHeat();
+  show($("ctxseg"), canAdj); show($("ctxnote"), canAdj); renderWhy();
+  if (canAdj) { $("v-ctx").classList.toggle("on", useCtx); $("v-img").classList.toggle("on", !useCtx); $("ctxnote").textContent = useCtx ? "Ajustado por " + LAST.used.join(", ") + ", pela frequência de cada diagnóstico nesses grupos no ISIC, com peso reduzido e calibrado nos testes (o ISIC é um banco de referência, não da população)." : "Só a imagem, sem nenhum ajuste."; }
+  if (canAdj && useCtx) document.querySelectorAll("#probs .prow").forEach((row, r) => { const k = order[r], d = Math.round((p[k] - LAST.pImg[k]) * 100); if (Math.abs(d) >= 2) row.querySelector(".v").insertAdjacentHTML("beforeend", ' <span class="d">(img ' + Math.round(LAST.pImg[k] * 100) + '%)</span>'); });
+}
+function renderCtx(c) {
+  show($("ctxres"), c.any); syncTabs(); if (!c.any) return; $("ctxsum").textContent = ctxSummary(c); const box = $("flags"); box.innerHTML = "";
+  const F = flagsFor(c); if (!F.length) { box.innerHTML = '<div class="fl lo">Sem alertas pelas informações dadas.</div>'; return; } F.forEach(([l, t]) => { const d = document.createElement("div"); d.className = "fl " + l; d.textContent = t; box.appendChild(d); });
+}
+$("showall").onclick = () => { const h = document.querySelector("#probs .more").classList.contains("hide"); document.querySelectorAll("#probs .more").forEach(r => r.classList.toggle("hide", !h)); $("showall").textContent = h ? "Mostrar só os 8 primeiros" : "Mostrar todos os " + LAST.order.length; };
+$("v-img").onclick = () => { useCtx = false; if (LAST) applyView(); }; $("v-ctx").onclick = () => { useCtx = true; if (LAST) applyView(); };
+$("c-clear").onclick = () => { document.querySelectorAll("#ctx input, #ctx select, #ctx textarea").forEach(e => { if (e.type === "checkbox") e.checked = false; else e.value = ""; }); };
+$("copiar").onclick = async () => {
+  if (!LAST) return; const top = LAST.order.slice(0, 3).map(k => HF.names[k] + " " + Math.round(LAST.probs[k] * 100) + "%").join("; "), fl = flagsFor(LAST.ctx).map(x => "- " + x[1]).join("\n");
+  const t = "DermIA (estudo, não é diagnóstico)\nContexto: " + (ctxSummary(LAST.ctx) || "não informado") + "\nProbabilidades" + (LAST.used.length && useCtx ? " (ajustadas por " + LAST.used.join(", ") + ")" : " (só imagem)") + ": " + top + (fl ? "\nAlertas:\n" + fl : "");
+  try { await navigator.clipboard.writeText(t); $("copiar").textContent = "Copiado"; } catch (e) { $("copiar").textContent = "Não consegui copiar"; } setTimeout(() => $("copiar").textContent = "Copiar resumo", 1800);
+};
+
+
+/* ---------- explicação do chute ---------- */
+function phi(z) { const t = 1 / (1 + 0.2316419 * Math.abs(z)), d = 0.3989423 * Math.exp(-z * z / 2), p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; }
+function renderWhy() {
+  if (!LAST || !LAST.nn || !EXP) return; const p = LAST.probs, o = LAST.order, A = o[0], B = o[1], C = o[2], nm = k => HF.names[k], pc = x => Math.round(x * 100) + "%", isP = (c, k) => c.pos.includes(nm(k));
+  const Z = EXP.concepts.map(c => { let s = 0; for (let j = 0; j < 512; j++) s += c.vec[j] * LAST.embN[j]; return { c, z: (s - c.mean) / c.std }; });
+  const sug = Z.filter(x => x.z >= 1).sort((a, b) => b.z - a.z), tag = x => esc(x.c.pt) + ' <span class="d">(acima de ' + Math.min(99, Math.round(phi(x.z) * 100)) + '% do banco)</span>';
+  const pro = sug.filter(x => isP(x.c, A)).slice(0, 4), dup = sug.filter(x => !isP(x.c, A) && (isP(x.c, B) || isP(x.c, C))).slice(0, 4);
+  const falta = Z.filter(x => isP(x.c, A) && x.z < 0.5).sort((a, b) => b.c.auc - a.c.auc).slice(0, 3);
+  const viz = LAST.nn.filter(n => BANK.items[n.i].f === A).length, vizB = LAST.nn.filter(n => BANK.items[n.i].f === B).length, cl = EXP.classes[A], clB = EXP.classes[B];
+  const li = (arr, f) => arr.length ? "<ul>" + arr.map(x => "<li>" + f(x) + "</li>").join("") + "</ul>" : "";
+  let h = '<div class="fl lo" style="margin-top:0"><b>' + esc(nm(A)) + "</b> (" + pc(p[A]) + "), seguido de " + esc(nm(B)) + " (" + pc(p[B]) + ") e " + esc(nm(C)) + " (" + pc(p[C]) + ").</div>";
+  h += "<h3 style='font-size:16px;margin:12px 0 4px'>O que sustenta o chute</h3>";
+  h += (pro.length ? "<div class='sub' style='margin:0'>Estruturas típicas desse diagnóstico que o modelo sugere:</div>" + li(pro, tag) : "<div class='sub' style='margin:0'>O modelo não sugeriu nenhuma estrutura típica desse diagnóstico: o chute vem do aspecto geral da imagem (cor, textura, forma), não de um achado específico.</div>");
+  h += "<div class='sub' style='margin:4px 0'>Casos parecidos do banco: <b>" + viz + " de " + LAST.nn.length + "</b> são " + esc(nm(A)) + (vizB ? ", " + vizB + " são " + esc(nm(B)) : "") + ". Veja o mapa de calor para saber onde a evidência está.</div>";
+  h += "<h3 style='font-size:16px;margin:14px 0 4px'>O que deixa na dúvida</h3>";
+  h += (dup.length ? "<div class='sub' style='margin:0'>Estruturas sugeridas que são típicas dos outros candidatos, não do primeiro:</div>" + li(dup, x => tag(x) + ' <span class="d">· típica de ' + (isP(x.c, B) ? esc(nm(B)) : esc(nm(C))) + "</span>") : "<div class='sub' style='margin:0'>Nenhuma estrutura típica dos outros candidatos foi sugerida; a dúvida vem da semelhança geral entre os diagnósticos.</div>");
+  h += "<div class='sub' style='margin:4px 0'>Quando o modelo chuta <b>" + esc(nm(A)) + "</b>, ele acerta " + pc(cl.prec) + " das vezes (nos testes, " + cl.n_pred + " chutes)" + (cl.errou_para.length ? "; quando erra, o diagnóstico real costuma ser " + cl.errou_para.map(e => esc(e[1]) + " (" + pc(e[0]) + ")").join(", ") : "") + ".</div>";
+  h += "<h3 style='font-size:16px;margin:14px 0 4px'>O que procurar no exame</h3>";
+  h += "<div class='fl'><b>Típico de " + esc(nm(A)) + ":</b> " + esc(cl.typ) + "</div><div class='fl lo'><b>Típico de " + esc(nm(B)) + ":</b> " + esc(clB.typ) + "</div>";
+  if (falta.length) h += "<div class='sub' style='margin:6px 0 0'>Típicas de " + esc(nm(A)) + " que o modelo <b>não</b> sugeriu (veja se existem): " + falta.map(x => esc(x.c.pt)).join("; ") + ".</div>";
+  h += "<div class='sub' style='margin-top:10px'>Como ler: o modelo compara a imagem com termos de dermatoscopia escritos (texto) e com o banco. A sugestão de estrutura é <b>experimental</b>: nos testes ela separa bem os diagnósticos esperados (AUC 0,75 a 0,98), mas isso não prova que a estrutura está na foto, pois a pontuação também reflete o diagnóstico em si. Use como lista do que perguntar ao seu exame. Os textos de \"típico\" são conhecimento clássico de dermatoscopia (Kittler, Argenziano, Dermoscopedia) e não vêm do modelo: confira.</div>";
+  $("why").innerHTML = h; show($("whyres"), !LAST.nd); syncTabs();
+}
+
+/* ---------- fluxo principal ---------- */
+let DEC = null, BOX = null, AUTO = null;
+const ed = { min: 64, max: 0 };
+function edDraw() { const cv = $("ed-cv"), wd = $("ed-wrap").clientWidth, bx = $("ed-box"); cv.style.width = wd + "px"; cv.style.height = Math.round(wd * DEC.h / DEC.w) + "px"; const k = wd / DEC.w;
+  bx.style.left = BOX.x * k + "px"; bx.style.top = BOX.y * k + "px"; bx.style.width = bx.style.height = BOX.s * k + "px"; $("ed-size").value = Math.round(1000 * (BOX.s - ed.min) / Math.max(1, ed.max - ed.min)); }
+function edSet(cx, cy, S) { S = Math.round(Math.min(ed.max, Math.max(ed.min, S))); let x = Math.round(cx - S / 2), y = Math.round(cy - S / 2); x = Math.min(Math.max(x, 0), DEC.w - S); y = Math.min(Math.max(y, 0), DEC.h - S); BOX = { x, y, s: S }; edDraw(); }
+function openEditor() {
+  const cv = $("ed-cv"); cv.width = DEC.w; cv.height = DEC.h; cv.getContext("2d").drawImage(DEC.canvas, 0, 0); $("ed-wrap").style.maxWidth = Math.min(1, (window.innerHeight * 0.52) / DEC.h * DEC.w / ($("editor").clientWidth || 360)) * 100 + "%";
+  ed.max = Math.min(DEC.w, DEC.h); ed.min = Math.max(48, Math.round(0.06 * ed.max)); $("ed-auto").textContent = "Enquadrar lesão"; $("ed-auto").disabled = !AUTO; $("ed-note").textContent = "O modelo acerta mais com a foto inteira, como está. Só aproxime se a lesão for pequena ou estiver fora do centro: arraste para mover, dois dedos ou a barra para o tamanho" + (AUTO ? ", ou toque em Enquadrar lesão." : ". Não encontrei a lesão sozinho nesta foto.");
+  show($("entrada"), false); show($("editor"), true); requestAnimationFrame(edDraw); $("editor").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+(() => { const box = $("ed-box"), pts = new Map(); let start = null;
+  const k = () => $("ed-wrap").clientWidth / DEC.w;
+  const snap = () => { const a = [...pts.values()]; return { a, b: BOX ? { ...BOX } : null, d: a.length > 1 ? Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) : 0, c: a.length > 1 ? { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2 } : a[0] }; };
+  $("ed-wrap").addEventListener("pointerdown", e => { if (!DEC) return; $("ed-wrap").setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); start = snap(); e.preventDefault(); });
+  $("ed-wrap").addEventListener("pointermove", e => { if (!pts.has(e.pointerId) || !start) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); const now = snap(), kk = k(), b = start.b;
+    if (now.a.length > 1 && start.d > 0) edSet(b.x + b.s / 2 + (now.c.x - start.c.x) / kk, b.y + b.s / 2 + (now.c.y - start.c.y) / kk, b.s * now.d / start.d);
+    else edSet(b.x + b.s / 2 + (now.c.x - start.c.x) / kk, b.y + b.s / 2 + (now.c.y - start.c.y) / kk, b.s); });
+  const up = e => { pts.delete(e.pointerId); start = pts.size ? snap() : null; }; $("ed-wrap").addEventListener("pointerup", up); $("ed-wrap").addEventListener("pointercancel", up);
+  $("ed-size").addEventListener("input", () => { if (!BOX) return; edSet(BOX.x + BOX.s / 2, BOX.y + BOX.s / 2, ed.min + (ed.max - ed.min) * $("ed-size").value / 1000); });
+  window.addEventListener("resize", () => { if (DEC && !$("editor").classList.contains("hide")) edDraw(); });
+})();
+$("ed-auto").onclick = () => { const c = centerBox(DEC), atC = BOX.x === c.x && BOX.y === c.y && BOX.s === c.s; BOX = atC && AUTO ? { ...AUTO } : c; $("ed-auto").textContent = atC && AUTO ? "Foto inteira" : "Enquadrar lesão"; edDraw(); };
+$("ed-back").onclick = () => { show($("editor"), false); show($("entrada"), true); DEC = null; };
+$("ed-go").onclick = () => { show($("editor"), false); show($("entrada"), true); analyze(); };
+let SKIP = false; try { SKIP = localStorage.getItem("dermia_skip") === "1"; } catch (e) {} $("ed-skip").checked = SKIP;
+$("ed-skip").onchange = () => { SKIP = $("ed-skip").checked; try { localStorage.setItem("dermia_skip", SKIP ? "1" : "0"); } catch (e) {} };
+const onPhoto = async ev => {
+  const f = ev.target.files[0]; ev.target.value = ""; if (!f || !session || busy) return;
+  try { DEC = await decodeImage(f); AUTO = autoBox(DEC); BOX = centerBox(DEC); }
+  catch (e) { $("foto-msg").textContent = "Não consegui abrir a foto: " + (e && e.message ? e.message : e); show($("foto-msg"), true); return; }
+  show($("foto-msg"), false);
+  if (SKIP) analyze(); else openEditor();
+};
+const analyze = async () => {
+  if (!DEC || busy) return; busy = true;
+  show($("res"), false); show($("tabs"), false); show($("scan"), false); show($("loading"), true); $("loading").scrollIntoView({ behavior: "smooth", block: "center" }); $("load-txt").textContent = "Analisando… (a primeira foto da sessão demora mais)";
+  await new Promise(r => setTimeout(r, 30));
+  try {
+    const c0 = centerBox(DEC), full = BOX.x === c0.x && BOX.y === c0.y && BOX.s === c0.s, t0 = performance.now(), crop = makeCrop(DEC, full ? null : BOX); $("cv-base").getContext("2d").drawImage(crop.canvas, 0, 0, 448, 448);
+    $("load-cv").getContext("2d").drawImage(crop.canvas, 0, 0, 168, 168); show($("scan"), true); $("load-txt").textContent = "Lendo a lesão…"; await new Promise(r => setTimeout(r, 30));
+    const toks = [], fm = new Float64Array(MODEL.D); let emb = null;
+    for (const view of MODEL.views) {                // vistas (normal e espelhada): média das características = média dos logits
+      const out = await session.run({ img: toTensor(crop.rgb, view) }); if (view === "id") emb = Float32Array.from(out.emb.data);
+      const tok = Float32Array.from(out.tok.data), fv = feats(tok); for (let j = 0; j < fm.length; j++) fm[j] += fv[j] / MODEL.views.length; toks.push({ view, tok });
+    }
+    const p = softmax(headLogits(fm), HF.T), order = p.map((v, k) => k).sort((a, b) => p[b] - p[a]), ctx = getCtx(), adj = adjust(p, ctx);
+    let en = 0; for (let j = 0; j < 512; j++) en += emb[j] * emb[j]; en = Math.sqrt(en);
+    const nn = neighbors(emb, 12), nd = nonDerm(emb) > 0.5;
+    LAST = { toks, hc: {}, pImg: p, pCtx: adj.q, used: adj.used, ctx, probs: p, order, embN: Array.from(emb, x => x / en), nn, nd, ms: Math.round(performance.now() - t0) };
+    showHeat = true; $("sg-heat").classList.add("on"); $("sg-orig").classList.remove("on");
+    applyView(); renderCtx(ctx); renderNeigh(nn, ctx); renderWhy();
+    show($("nonderm"), nd); ["probs", "chute", "groups", "heat-chips", "neigh"].forEach(i => $(i).style.opacity = nd ? ".3" : "1"); show($("loading"), false); show($("res"), true);
+    show($("tabs"), true); syncTabs(); $("sec-mapa").scrollIntoView({ behavior: "smooth", block: "start" }); console.log("analise ms", LAST.ms);
+  } catch (e) { $("load-txt").textContent = "Erro ao analisar: " + (e && e.message ? e.message : e); console.log(e); }
+  busy = false;
+};
+
+function go(v) { ["analisar", "sobre", "ajustes"].forEach(x => show($("view-" + x), x === v)); document.querySelectorAll(".tabbar button").forEach(b => b.classList.toggle("on", b.dataset.v === v)); show($("tabs"), v === "analisar" && !!LAST && !$("res").classList.contains("hide")); window.scrollTo(0, 0); }
+document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => go(b.dataset.v));
+$("foto").onchange = onPhoto; $("foto-cam").onchange = onPhoto;
+function syncTabs() { document.querySelectorAll("#tabs button").forEach(b => show(b, !$(b.dataset.t).classList.contains("hide"))); }
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => $(b.dataset.t).scrollIntoView({ behavior: "smooth", block: "start" }));
+if ("IntersectionObserver" in window) { const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.t === e.target.id)); }), { rootMargin: "-35% 0px -60% 0px" });
+  ["sec-mapa", "sec-dx", "whyres", "ctxres", "sec-casos"].forEach(i => io.observe($(i))); }
+function ctxCount() { const n = document.querySelectorAll("#ctx input:checked").length + Array.from(document.querySelectorAll("#ctx select, #ctx input[type=number], #ctx textarea")).filter(e => e.value).length; $("ctx-n").textContent = n; show($("ctx-n"), n > 0); }
+$("ctx").addEventListener("input", ctxCount); $("ctx").addEventListener("change", ctxCount); $("c-clear").addEventListener("click", () => setTimeout(ctxCount, 0));
+
+/* ---------- miniaturas offline e atualização ---------- */
+$("off").onclick = async e => {
+  e.preventDefault(); const a = $("off"); if (!self.caches) { a.firstElementChild.textContent = "Este navegador não permite guardar offline"; return; }
+  try { const n = BANK.thumb_chunks, c = await caches.open("dermia-thumbs-" + BANK.v); for (let i = 0; i < n; i++) { a.firstElementChild.textContent = "Baixando miniaturas " + (i + 1) + "/" + n + "…"; if (!(await c.match("thumbs/t" + i + ".bin"))) await c.add("thumbs/t" + i + ".bin"); }
+    for (const k of await caches.keys()) if (k.startsWith("dermia-thumbs-") && k !== "dermia-thumbs-" + BANK.v) await caches.delete(k); a.firstElementChild.textContent = "Miniaturas guardadas para uso offline"; }
+  catch (x) { a.firstElementChild.textContent = "Não consegui baixar as miniaturas"; }
+};
+/* atualização automática: procura versão nova ao abrir e ao voltar para o app; aplica sozinho se não houver análise na tela */
+const APP_VER = "v6";
+let swReg = null, pendingReload = false;
+function softReload() { if (busy || (LAST && !$("res").classList.contains("hide") && document.visibilityState === "visible")) { pendingReload = true; show($("upd"), true); } else location.reload(); }
+$("upd").onclick = () => location.reload();
+if ("serviceWorker" in navigator) {
+  const had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (had) softReload(); });
+  navigator.serviceWorker.register("sw.js").then(r => { swReg = r; r.update().catch(() => {}); }).catch(() => {});
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && pendingReload) location.reload(); if (document.visibilityState === "visible" && swReg) swReg.update().catch(() => {}); });
+  setInterval(() => swReg && swReg.update().catch(() => {}), 30 * 60 * 1000);
+}
+$("upd-check").onclick = async () => { $("st").textContent = "Procurando…"; try { if (swReg) { await swReg.update(); $("st").textContent = swReg.installing || swReg.waiting ? "Versão nova encontrada: aplicando…" : "Você já está na versão mais recente."; } else $("st").textContent = "Atualização automática indisponível nesta prévia."; } catch (e) { $("st").textContent = "Sem conexão para procurar atualização."; } };
+function renderAcc() {
+  const c = HF.cv, pc = x => Math.round(x * 100) + "%", rows = Object.entries(c.res).sort((a, b) => b[1].n - a[1].n).map(([n, r]) => "<tr><td>" + esc(n) + ' <span class="d">(' + r.n + ')</span></td><td>' + pc(r.top1) + " / " + pc(r.top3) + "</td></tr>").join("");
+  $("acc").innerHTML = "<p>Teste no ISIC: " + c.n + " imagens de dermatoscopia com histopatologia, " + HF.names.length + " diagnósticos, validação cruzada sem misturar imagens do mesmo paciente, feita com o mesmo modelo e o mesmo tratamento de imagem que rodam neste app.</p><table>" +
+    "<tr><td>Diagnóstico exato em 1º lugar</td><td>" + pc(c.top1) + "</td></tr><tr><td>Exato ou compatível (laudo sem subtipo)</td><td>" + pc(c.compat) + "</td></tr><tr><td>Entre os 3 primeiros</td><td>" + pc(c.top3) + "</td></tr><tr><td>Entre os 5 primeiros</td><td>" + pc(c.top5) + "</td></tr><tr><td>Grupo certo (9 categorias)</td><td>" + pc(c.group) + "</td></tr></table>" +
+    '<p class="d">"Compatível": o chute e o laudo são da mesma família e um dos dois não informa o subtipo (ex.: chute "melanoma in situ", laudo "melanoma" sem subtipo).</p><p class="d">Por diagnóstico (nº de casos): 1º lugar / entre os 3 primeiros</p><table>' + rows + "</table><p>Subtipos com menos de 100 casos têm acerto instável. Parte das imagens vem de poucos centros: o modelo pode aprender o estilo da foto junto com a lesão. O modelo pode ter visto ISIC no pré-treino, então estes números são otimistas.</p>";
+}
+boot();
+</script>
+</body>
+</html>

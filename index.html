@@ -229,7 +229,8 @@ body{position:fixed;inset:0;display:flex;flex-direction:column;height:var(--apph
 .tabbar{position:relative!important;left:auto;right:auto;bottom:auto!important;flex:none;padding:6px 12px calc(4px + env(safe-area-inset-bottom) * .8)}
 html{background:#061B33}
 .tabbar{background:#061B33!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
-html.curta .tabbar{padding-bottom:4px}
+html.inst,html.inst body{height:var(--apph)!important;min-height:var(--apph)}
+html.inst body{bottom:auto}
 .tabbar button{padding:5px 4px}
 .tabs{top:6px!important}
 .sec{scroll-margin-top:62px!important}
@@ -239,11 +240,12 @@ html.curta .tabbar{padding-bottom:4px}
 </style>
 <script>
 /* iPhone instalado: a tela às vezes fica mais curta que o aparelho e sobra faixa embaixo da barra */
-(function(){function fit(){var st=navigator.standalone||matchMedia('(display-mode: standalone)').matches;var h=innerHeight;var r=document.documentElement;
-r.style.setProperty('--apph',h+'px');
-/* iPhone instalado: às vezes a área da página termina antes do fim da tela (o sistema pinta a faixa de baixo). Nesse caso a barra não precisa da margem do indicador de início. */
-var full=Math.max(screen.height,screen.width);r.classList.toggle('curta',!!st&&innerWidth<innerHeight&&full-h>20);}
-addEventListener('resize',fit);addEventListener('orientationchange',function(){setTimeout(fit,300)});addEventListener('pageshow',fit);document.addEventListener('DOMContentLoaded',fit);document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(fit,100)});})();
+(function(){function fit(){var st=navigator.standalone||matchMedia('(display-mode: standalone)').matches;var r=document.documentElement;var por=innerWidth<innerHeight;
+/* iPhone instalado (tela cheia): o sistema às vezes informa uma altura menor que a tela real. Em pé, usa a altura física da tela. */
+var full=por?Math.max(screen.height,screen.width):Math.min(screen.height,screen.width);var vv=window.visualViewport?visualViewport.height:innerHeight;
+var h=(st&&por)?full:Math.max(innerHeight,vv);r.style.setProperty('--apph',h+'px');r.classList.toggle('inst',!!st);
+window.__tela='inner '+innerHeight+' · visível '+Math.round(vv)+' · tela '+full+' · usada '+h+(st?' · instalado':' · navegador');var e=document.getElementById('tela-info');if(e)e.textContent=window.__tela;}
+addEventListener('resize',fit);addEventListener('orientationchange',function(){setTimeout(fit,300)});addEventListener('pageshow',fit);document.addEventListener('DOMContentLoaded',fit);document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(fit,100)});if(window.visualViewport)visualViewport.addEventListener('resize',fit);fit();})();
 </script>
 </head>
 <body>
@@ -415,7 +417,7 @@ addEventListener('resize',fit);addEventListener('orientationchange',function(){s
     <button class="row danger" id="rm"><span>Remover modelo deste aparelho</span></button>
   </div>
   <div id="st" class="sub" style="margin:0 2px"></div>
-  <div class="card"><p style="margin:0">Dermatolog.IA · uso pessoal de estudo · Dr. Pedro Schmitz, CRM/SC 38229.<br>Banco: <span id="nb"></span> casos do ISIC Archive. O app se atualiza sozinho quando há versão nova.</p></div>
+  <div class="card"><p style="margin:0"><span class="d" id="tela-info"></span><br>Dermatolog.IA · uso pessoal de estudo · Dr. Pedro Schmitz, CRM/SC 38229.<br>Banco: <span id="nb"></span> casos do ISIC Archive. O app se atualiza sozinho quando há versão nova.</p></div>
 </section>
 </div>
 
@@ -915,7 +917,7 @@ $("off").onclick = async e => {
   catch (x) { a.firstElementChild.textContent = "Não consegui baixar as miniaturas"; }
 };
 /* atualização automática: procura versão nova ao abrir e ao voltar para o app; aplica sozinho se não houver análise na tela */
-const APP_VER = "v11";
+const APP_VER = "v12";
 let swReg = null, pendingReload = false;
 function softReload() { if (busy || (LAST && !$("res").classList.contains("hide") && document.visibilityState === "visible")) { pendingReload = true; show($("upd"), true); } else location.reload(); }
 $("upd").onclick = () => location.reload();

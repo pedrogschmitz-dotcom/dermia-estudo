@@ -97,6 +97,7 @@ details.ctx[open]>summary::after{transform:rotate(-135deg)}
 .scan::after{content:"";position:absolute;left:0;right:0;height:36%;top:-36%;background:linear-gradient(180deg,transparent,rgba(232,101,10,.55));border-bottom:2px solid var(--accent);animation:scan 1.3s linear infinite}
 @keyframes scan{to{top:100%}}
 /* resultado */
+#editor,#loading{scroll-margin-top:calc(var(--bar) + env(safe-area-inset-top) + 8px)}
 #res{display:flex;flex-direction:column;gap:14px}
 #res>*{animation:up .35s ease both}
 @keyframes up{from{opacity:.0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -178,43 +179,85 @@ footer .links{display:flex;flex-wrap:wrap;gap:4px 14px}
 input[type=range]{width:100%;accent-color:#E8650A;margin:4px 0 12px}
 .edrow{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--mute)}
 .set .row input[type=checkbox]{width:22px;height:22px;accent-color:#E8650A}
+.top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center}
+.top .logo{display:flex;align-items:center;justify-content:center;gap:8px}
+.ic{width:44px;height:44px;display:grid;place-items:center;border:0;background:transparent;color:var(--paper);border-radius:12px;cursor:pointer;padding:0}
+.ic:active{background:rgba(255,255,255,.08)}
+.ic.cam{color:var(--accent)}
+/* introdução */
+.intro{position:fixed;inset:0;z-index:30;overflow-y:auto;background:radial-gradient(90% 60% at 50% 18%,rgba(232,101,10,.22),transparent 65%),radial-gradient(70% 40% at 50% 100%,rgba(196,160,96,.10),transparent 70%),var(--ink)}
+.intro-in{min-height:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;justify-content:center;gap:26px;padding:calc(28px + env(safe-area-inset-top)) 22px calc(22px + env(safe-area-inset-bottom))}
+.brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+.orb{width:116px;height:116px;margin-bottom:10px;position:relative}
+.orb svg{width:100%;height:100%;filter:drop-shadow(0 10px 30px rgba(232,101,10,.35))}
+.orb::after{content:"";position:absolute;inset:-14px;border-radius:50%;border:1px solid rgba(232,101,10,.35);animation:pulse 2.6s ease-out infinite}
+@keyframes pulse{from{transform:scale(.85);opacity:1}to{transform:scale(1.25);opacity:0}}
+.brand h1{font:400 54px/0.95 var(--display);letter-spacing:.03em;text-transform:uppercase;margin:0;color:var(--paper)}
+.brand h1 b{font-weight:400;color:var(--accent)}
+.brand p{margin:4px 0 0;color:#D9D2C7;font-size:15px;max-width:30ch}
+.panel{background:rgba(35,33,32,.78);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.panel input[type=password]{margin:0;text-align:center;font-size:17px;letter-spacing:.04em}
+.panel .hint{font-size:12.5px;color:var(--mute);text-align:center;margin:0}
+.or{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:12px}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.intro .foot{text-align:center;font-size:11.5px;color:var(--mute);margin:0;letter-spacing:.06em;text-transform:uppercase}
+/* início estilo app */
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:26px 18px 22px}
+.hero .lens{width:100%;margin:0;cursor:pointer}
+.hero h3{font-size:24px}
+.hero p{margin:0;color:var(--mute);font-size:14px;max-width:32ch}
+/* folha de ações (câmera) */
+.sheet{position:fixed;inset:0;z-index:25}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:fade .2s ease both}
+.sheet-in{position:absolute;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;animation:rise .25s cubic-bezier(.2,.8,.2,1) both;max-width:520px;margin:0 auto}
+.sheet-grp{background:#2A2725;border-radius:18px;overflow:hidden}
+.sheet-opt{display:flex;align-items:center;gap:14px;width:100%;padding:17px 18px;border:0;background:transparent;color:var(--paper);font:500 17px var(--body);cursor:pointer;border-bottom:1px solid rgba(255,255,255,.07)}
+.sheet-opt:last-child{border-bottom:0}.sheet-opt svg{color:var(--accent)}
+.sheet-opt:active{background:rgba(255,255,255,.06)}
+.sheet-x{justify-content:center;font-weight:800;background:#2A2725;border-radius:18px}
+.sheet-t{padding:12px 18px 4px;font-size:12.5px;color:var(--mute);text-align:center}
+@keyframes fade{from{opacity:0}}@keyframes rise{from{transform:translateY(40px);opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
+<div id="intro" class="intro">
+  <div class="intro-in">
+    <div class="brand">
+      <div class="orb"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="50" fill="none" stroke="#E8650A" stroke-width="7"/><circle cx="60" cy="60" r="27" fill="none" stroke="#C4A060" stroke-width="3.5"/><circle cx="60" cy="60" r="8" fill="#F4F1EC"/></svg></div>
+      <h1>Derm<b>IA</b></h1>
+      <p>Estudo de dermatoscopia com inteligência artificial</p>
+      <span class="d">Dr. Pedro Schmitz · CRM/SC 38229</span>
+    </div>
+    <div class="panel">
+      <div id="m-status" class="hint"><span class="spin"></span>Preparando…</div>
+      <div id="m-install" class="hide" style="display:flex;flex-direction:column;gap:10px">
+        <p class="hint">Primeiro acesso neste aparelho. O modelo (85 MB) baixa uma vez e depois o app abre offline.</p>
+        <input id="pw" type="password" placeholder="Frase de acesso" autocomplete="current-password" autocapitalize="off" enterkeyhint="go">
+        <button id="btn-install" class="btn">Entrar</button>
+        <div class="prog hide" id="prog"><i></i></div>
+        <div id="m-msg" class="hint"></div>
+        <details class="ctx" style="margin-top:0"><summary>Tenho o arquivo do modelo (.onnx)</summary><input id="file-model" type="file" accept=".onnx,application/octet-stream" class="btn ghost" style="padding:10px;margin-top:8px" style="padding:10px;margin-top:8px"></details>
+      </div>
+      <div id="lock" class="hide" style="display:flex;flex-direction:column;gap:10px">
+        <button id="btn-fid" class="btn hide"><svg width="26" height="26" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M6 20V12a6 6 0 0 1 6-6h8M44 6h8a6 6 0 0 1 6 6v8M58 44v8a6 6 0 0 1-6 6h-8M20 58h-8a6 6 0 0 1-6-6v-8"/><path d="M23 25v5M41 25v5M32 25v10h-3M24 42c4.5 4 11.5 4 16 0"/></svg>Entrar com Face ID</button>
+        <div id="lock-or" class="or hide">ou</div>
+        <div id="lock-alt" style="display:flex;flex-direction:column;gap:10px"><input id="lock-pw" type="password" placeholder="Frase de acesso" autocomplete="current-password" autocapitalize="off" enterkeyhint="go"><button id="lock-go" class="btn ghost">Entrar</button></div>
+        <div id="lock-msg" class="hint"></div>
+        <div style="text-align:center"><button id="lock-pass" class="link hide">Usar a frase</button><button id="lock-reset" class="link">Esqueci a frase / redefinir</button></div>
+      </div>
+    </div>
+    <p class="foot">Ferramenta de estudo · não é diagnóstico</p>
+  </div>
+</div>
 <header class="top">
-  <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="11.5" fill="none" stroke="#E8650A" stroke-width="2.5"/><circle cx="15" cy="15" r="6" fill="none" stroke="#C4A060" stroke-width="1.5"/><circle cx="15" cy="15" r="2" fill="#F4F1EC"/></svg>
-  <h1>Derm<b>IA</b></h1>
-  <div class="who">Dr. Pedro Schmitz<br>CRM/SC 38229</div>
+  <button id="cam-btn" class="ic cam" aria-label="Nova foto"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5A2 2 0 0 1 5.5 6.5h2l1.6-2.2h5.8l1.6 2.2h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.6"/></svg></button>
+  <h1 class="logo"><svg width="26" height="26" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="11.5" fill="none" stroke="#E8650A" stroke-width="2.5"/><circle cx="15" cy="15" r="6" fill="none" stroke="#C4A060" stroke-width="1.5"/><circle cx="15" cy="15" r="2" fill="#F4F1EC"/></svg><span>Derm<b>IA</b></span></h1>
+  <button id="lock-now" class="ic" aria-label="Bloquear o app"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></button>
 </header>
 <div class="wrap">
 <section id="view-analisar" class="view">
   <div id="upd" class="alert soft hide" style="cursor:pointer">Nova versão instalada. Toque aqui para recarregar.</div>
   
-
-  <div id="lock" class="card center hide">
-    <svg class="faceid" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 20V12a6 6 0 0 1 6-6h8M44 6h8a6 6 0 0 1 6 6v8M58 44v8a6 6 0 0 1-6 6h-8M20 58h-8a6 6 0 0 1-6-6v-8"/><path d="M23 25v5M41 25v5M32 25v10h-3M24 42c4.5 4 11.5 4 16 0"/></svg>
-    <h3>App bloqueado</h3>
-    <p>Use o Face ID para abrir o DermIA neste aparelho.</p>
-    <button id="btn-fid" class="btn">Entrar com Face ID</button>
-    <div id="lock-msg" class="sub" style="margin:0"></div>
-    <div id="lock-alt" class="hide" style="width:100%"><input id="lock-pw" type="password" placeholder="Frase de acesso" autocomplete="off" autocapitalize="off"><button id="lock-go" class="btn ghost">Entrar com a frase</button></div>
-    <div><button id="lock-pass" class="link">Usar a frase de acesso</button> <button id="lock-reset" class="link">Redefinir neste aparelho</button></div>
-  </div>
-
-  <div id="modelo" class="card">
-    <div id="m-status"><span class="spin"></span>Verificando o modelo…</div>
-    <div id="m-install" class="hide">
-      <span class="eyebrow">Primeiro acesso neste aparelho</span>
-      <h3 style="font-size:22px;margin:6px 0 6px">Instalar o modelo</h3>
-      <p class="sub" style="margin:0 0 6px">São 85 MB, baixados uma vez. Depois o app abre offline e não pede mais a frase.</p>
-      <input id="pw" type="password" placeholder="Frase de acesso" autocomplete="off" autocapitalize="off">
-      <button id="btn-install" class="btn">Instalar modelo</button>
-      <div class="prog hide" id="prog"><i></i></div>
-      <div id="m-msg" class="sub"></div>
-      <details class="ctx"><summary>Tenho o arquivo do modelo (.onnx)</summary><input id="file-model" type="file" accept=".onnx,application/octet-stream" class="btn ghost" style="padding:10px;margin-top:8px"></details>
-    </div>
-  </div>
 
   <div id="fid-offer" class="card center hide">
     <svg class="faceid" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 20V12a6 6 0 0 1 6-6h8M44 6h8a6 6 0 0 1 6 6v8M58 44v8a6 6 0 0 1-6 6h-8M20 58h-8a6 6 0 0 1-6-6v-8"/><path d="M23 25v5M41 25v5M32 25v10h-3M24 42c4.5 4 11.5 4 16 0"/></svg>
@@ -225,17 +268,23 @@ input[type=range]{width:100%;accent-color:#E8650A;margin:4px 0 12px}
     <div id="fid-msg" class="sub" style="margin:0"></div>
   </div>
 
-  <div id="entrada" class="card hide">
-    <div class="lens"><div class="ring"><i></i></div><span>Lesão no centro. Você pode ajustar o recorte depois.</span></div>
-    <div class="two">
-      <label class="btn" for="foto-cam"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Tirar foto</label>
-      <label class="btn ghost" for="foto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>Galeria</label>
-    </div>
-    <div id="foto-msg" class="alert hide" style="margin-top:10px"></div>
-    <input id="foto-cam" type="file" accept="image/*" capture="environment" class="hide">
-    <input id="foto" type="file" accept="image/*" class="hide">
-    <div class="sub" style="margin:10px 2px 0">Ferramenta de estudo, não é diagnóstico. Tudo roda no aparelho: a foto não sai do iPhone.</div>
-    <details id="ctx" class="ctx"><summary>Contexto clínico (opcional) <span id="ctx-n" class="count hide"></span></summary>
+  <div id="entrada" class="card hero hide">
+    <div id="hero-lens" class="lens"><div class="ring"><i></i></div><span>Toque para começar</span></div>
+    <h3>Analisar uma lesão</h3>
+    <p>Toque na câmera no canto da tela ou aqui embaixo. Você escolhe tirar a foto agora ou usar uma da galeria.</p>
+    <button id="hero-btn" class="btn"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5A2 2 0 0 1 5.5 6.5h2l1.6-2.2h5.8l1.6 2.2h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.6"/></svg>Nova análise</button>
+    <div id="foto-msg" class="alert hide" style="width:100%"></div>
+    <p class="d">Tudo roda no aparelho: a foto não sai do iPhone.</p>
+  </div>
+  <input id="foto-cam" type="file" accept="image/*" capture="environment" class="hide">
+  <input id="foto" type="file" accept="image/*" class="hide">
+
+  <div id="editor" class="card hide">
+    <span class="eyebrow">Ajuste o recorte</span>
+    <div id="ed-note" class="sub" style="margin:4px 0 0">Deixe a lesão inteira dentro do quadrado, com um pouco de pele em volta. Arraste para mover; use dois dedos ou a barra para o tamanho.</div>
+    <div id="ed-wrap" class="edwrap"><canvas id="ed-cv"></canvas><div id="ed-box"><i></i></div></div>
+    <div class="edrow"><span>menor</span><input id="ed-size" type="range" min="0" max="1000" value="500" aria-label="Tamanho do recorte"><span>maior</span></div>
+    <details id="ctx" class="ctx" style="margin:0 0 12px"><summary>Contexto clínico (opcional) <span id="ctx-n" class="count hide"></span></summary>
       <div class="sub" style="margin:6px 0">Tudo opcional. Região, idade e sexo ajustam as probabilidades (com base no ISIC) e você pode comparar com "só imagem". O resto gera sinais de alerta por regra clínica e não muda o modelo.</div>
       <div class="f">
         <div class="full"><label>Região da lesão<select id="c-reg"></select></label></div>
@@ -255,15 +304,8 @@ input[type=range]{width:100%;accent-color:#E8650A;margin:4px 0 12px}
       <div class="f"><div class="full"><label>Observações<textarea id="c-obs" rows="2" placeholder="Ex.: sangrou após trauma"></textarea></label></div></div>
       <button class="btn ghost" id="c-clear" style="padding:11px;font-size:14px">Limpar contexto</button>
     </details>
-  </div>
-
-  <div id="editor" class="card hide">
-    <span class="eyebrow">Ajuste o recorte</span>
-    <div id="ed-note" class="sub" style="margin:4px 0 0">Deixe a lesão inteira dentro do quadrado, com um pouco de pele em volta. Arraste para mover; use dois dedos ou a barra para o tamanho.</div>
-    <div id="ed-wrap" class="edwrap"><canvas id="ed-cv"></canvas><div id="ed-box"><i></i></div></div>
-    <div class="edrow"><span>menor</span><input id="ed-size" type="range" min="0" max="1000" value="500" aria-label="Tamanho do recorte"><span>maior</span></div>
     <div class="two"><button id="ed-auto" class="btn ghost">Enquadrar lesão</button><button id="ed-go" class="btn">Analisar</button></div>
-    <div style="text-align:center;margin-top:6px"><button id="ed-back" class="link">Trocar foto</button></div>
+    <div style="text-align:center;margin-top:6px"><button id="ed-back" class="link">Cancelar</button></div>
   </div>
 
   <div id="loading" class="card loading hide"><div id="scan" class="scan hide"><canvas id="load-cv" width="168" height="168"></canvas></div><div><span class="spin"></span><span id="load-txt">Analisando…</span></div></div>
@@ -352,6 +394,16 @@ input[type=range]{width:100%;accent-color:#E8650A;margin:4px 0 12px}
   <button data-v="sobre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>Sobre o modelo</button>
   <button data-v="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Ajustes</button>
 </div></nav>
+<div id="sheet" class="sheet hide" role="dialog" aria-label="Nova análise">
+  <div class="sheet-bg" id="sheet-bg"></div>
+  <div class="sheet-in">
+    <div class="sheet-grp"><div class="sheet-t">Nova análise</div>
+      <label class="sheet-opt" for="foto-cam"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5A2 2 0 0 1 5.5 6.5h2l1.6-2.2h5.8l1.6 2.2h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.6"/></svg>Tirar foto</label>
+      <label class="sheet-opt" for="foto"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>Escolher da galeria</label>
+    </div>
+    <button class="sheet-opt sheet-x" id="sheet-x">Cancelar</button>
+  </div>
+</div>
 <div id="ov" class="hide"><img id="ovi" alt="Caso ampliado"></div>
 
 <script src="vendor/ort.wasm.min.js"></script>
@@ -398,16 +450,17 @@ async function fidGet() {
   await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: [{ type: "public-key", id: raw, transports: ["internal"] }], userVerification: "required", timeout: 60000 } });
 }
 let unlockWait = null;
-function lockScreen() {
-  show($("lock"), true); show($("modelo"), false);
+function lockScreen(hasFid) {
+  show($("intro"), true); show($("m-status"), false); show($("m-install"), false); show($("lock"), true);
+  show($("btn-fid"), hasFid); show($("lock-or"), hasFid); $("lock-go").className = hasFid ? "btn ghost" : "btn";
   return new Promise(res => {
     unlockWait = res;
-    const go = async () => { $("lock-msg").textContent = ""; try { await fidGet(); show($("lock"), false); res(); } catch (e) { $("lock-msg").textContent = fidErr(e); show($("lock-alt"), true); } };
-    $("btn-fid").onclick = go; go();
+    const go = async () => { $("lock-msg").textContent = ""; try { await fidGet(); res(); } catch (e) { $("lock-msg").textContent = fidErr(e); $("lock-pw").focus(); } };
+    $("btn-fid").onclick = go; if (hasFid) go(); else setTimeout(() => $("lock-pw").focus(), 200);
   });
 }
 $("lock-pass").onclick = () => { show($("lock-alt"), true); $("lock-pw").focus(); };
-$("lock-go").onclick = async () => { const v = await kvGet("pwcheck").catch(() => null); if (v && v === await pwCheck($("lock-pw").value.trim())) { show($("lock"), false); unlockWait && unlockWait(); } else $("lock-msg").textContent = "Frase incorreta."; };
+$("lock-go").onclick = async () => { const v = await kvGet("pwcheck").catch(() => null); if (v && v === await pwCheck($("lock-pw").value.trim())) { $("lock-pw").value = ""; unlockWait && unlockWait(); } else { $("lock-msg").textContent = "Frase incorreta."; $("lock-pw").select(); } };
 $("lock-reset").onclick = async () => { if (!confirm("Apagar o modelo e o Face ID deste aparelho? Você vai precisar da frase para instalar de novo.")) return; try { const d = await idb(); const os = d.transaction("kv", "readwrite").objectStore("kv"); ["model", "model_sha", "fid", "pwcheck"].forEach(k => os.delete(k)); } catch (x) {} location.reload(); };
 async function offerFid() {
   if (await kvGet("fid").catch(() => null) || !(await fidAvailable()) || await kvGet("fid_no").catch(() => null)) return;
@@ -425,13 +478,15 @@ async function boot() {
   try { await loadData(); } catch (e) { $("m-status").textContent = "Erro ao carregar os dados do app: " + e.message; return; }
   let bytes = null, sha = null; try { sha = await kvGet("model_sha"); if (sha === MODEL.model_sha) bytes = await kvGet("model"); } catch (e) {}
   if (sha && sha !== MODEL.model_sha) $("m-msg").textContent = "O modelo foi atualizado: instale de novo (mesma frase de acesso).";
+  show($("m-status"), false);
   if (bytes) {
-    if (await kvGet("fid").catch(() => null)) await lockScreen();
-    show($("modelo"), true); try { await makeSession(bytes); ready(); refreshFidLink(); return; } catch (e) { console.log(e); }
+    const fid = await kvGet("fid").catch(() => null), pc = await kvGet("pwcheck").catch(() => null);
+    if (fid || pc) await lockScreen(!!fid);
+    show($("lock"), false); show($("m-status"), true); $("m-status").innerHTML = '<span class="spin"></span>Abrindo…'; try { await makeSession(bytes); ready(); refreshFidLink(); return; } catch (e) { console.log(e); }
   }
   show($("m-status"), false); show($("m-install"), true);
 }
-function ready() { renderAcc(); $("ver").textContent = APP_VER + " · modelo " + MODEL.model_sha.slice(0, 7); show($("modelo"), false); show($("entrada"), true); $("nb").textContent = BANK.n; }
+function ready() { renderAcc(); $("ver").textContent = APP_VER + " · modelo " + MODEL.model_sha.slice(0, 7); show($("intro"), false); show($("entrada"), !LAST); document.documentElement.scrollTop = 0; $("nb").textContent = BANK.n; }
 $("rm").onclick = async e => { e.preventDefault(); try { const d = await idb(); const os = d.transaction("kv", "readwrite").objectStore("kv"); ["model", "model_sha", "fid", "pwcheck"].forEach(k => os.delete(k)); } catch (x) {} location.reload(); };
 
 function b64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
@@ -467,7 +522,10 @@ async function installFromFile(ev) {
     await makeSession(bytes); try { await kvSet("model", bytes); await kvSet("model_sha", h); } catch (e) {} ready(); }
   catch (e) { $("m-msg").textContent = "Arquivo inválido: " + e.message; }
 }
-$("btn-install").onclick = installFromSite; $("file-model").onchange = installFromFile;
+$("btn-install").onclick = installFromSite;
+$("pw").addEventListener("keydown", e => { if (e.key === "Enter") installFromSite(); });
+$("lock-pw").addEventListener("keydown", e => { if (e.key === "Enter") $("lock-go").click(); });
+$("lock-now").onclick = () => location.reload(); $("file-model").onchange = installFromFile;
 
 /* ---------- pré-processamento: mesmo algoritmo do treino (bicúbico com antialias do Pillow, lado menor 224, recorte central) ---------- */
 function bic(x) { x = Math.abs(x); return x < 1 ? (1.5 * x - 2.5) * x * x + 1 : x < 2 ? (((x - 5) * x + 8) * x - 4) * -0.5 : 0; }
@@ -729,7 +787,7 @@ function edSet(cx, cy, S) { S = Math.round(Math.min(ed.max, Math.max(ed.min, S))
 function openEditor() {
   const cv = $("ed-cv"); cv.width = DEC.w; cv.height = DEC.h; cv.getContext("2d").drawImage(DEC.canvas, 0, 0); $("ed-wrap").style.maxWidth = Math.min(1, (window.innerHeight * 0.52) / DEC.h * DEC.w / ($("editor").clientWidth || 360)) * 100 + "%";
   ed.max = Math.min(DEC.w, DEC.h); ed.min = Math.max(48, Math.round(0.06 * ed.max)); $("ed-auto").textContent = "Enquadrar lesão"; $("ed-auto").disabled = !AUTO; $("ed-note").textContent = "O modelo acerta mais com a foto inteira, como está. Só aproxime se a lesão for pequena ou estiver fora do centro: arraste para mover, dois dedos ou a barra para o tamanho" + (AUTO ? ", ou toque em Enquadrar lesão." : ". Não encontrei a lesão sozinho nesta foto.");
-  show($("entrada"), false); show($("editor"), true); requestAnimationFrame(edDraw); $("editor").scrollIntoView({ behavior: "smooth", block: "start" });
+  show($("entrada"), false); show($("res"), false); show($("tabs"), false); show($("editor"), true); requestAnimationFrame(edDraw); $("editor").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 (() => { const box = $("ed-box"), pts = new Map(); let start = null;
   const k = () => $("ed-wrap").clientWidth / DEC.w;
@@ -743,8 +801,8 @@ function openEditor() {
   window.addEventListener("resize", () => { if (DEC && !$("editor").classList.contains("hide")) edDraw(); });
 })();
 $("ed-auto").onclick = () => { const c = centerBox(DEC), atC = BOX.x === c.x && BOX.y === c.y && BOX.s === c.s; BOX = atC && AUTO ? { ...AUTO } : c; $("ed-auto").textContent = atC && AUTO ? "Foto inteira" : "Enquadrar lesão"; edDraw(); };
-$("ed-back").onclick = () => { show($("editor"), false); show($("entrada"), true); DEC = null; };
-$("ed-go").onclick = () => { show($("editor"), false); show($("entrada"), true); analyze(); };
+$("ed-back").onclick = () => { show($("editor"), false); DEC = null; if (LAST) { show($("res"), true); show($("tabs"), true); } else show($("entrada"), true); };
+$("ed-go").onclick = () => { show($("editor"), false); analyze(); };
 let SKIP = false; try { SKIP = localStorage.getItem("dermia_skip") === "1"; } catch (e) {} $("ed-skip").checked = SKIP;
 $("ed-skip").onchange = () => { SKIP = $("ed-skip").checked; try { localStorage.setItem("dermia_skip", SKIP ? "1" : "0"); } catch (e) {} };
 const onPhoto = async ev => {
@@ -756,7 +814,7 @@ const onPhoto = async ev => {
 };
 const analyze = async () => {
   if (!DEC || busy) return; busy = true;
-  show($("res"), false); show($("tabs"), false); show($("scan"), false); show($("loading"), true); $("loading").scrollIntoView({ behavior: "smooth", block: "center" }); $("load-txt").textContent = "Analisando… (a primeira foto da sessão demora mais)";
+  show($("entrada"), false); show($("res"), false); show($("tabs"), false); show($("scan"), false); show($("loading"), true); $("loading").scrollIntoView({ behavior: "smooth", block: "center" }); $("load-txt").textContent = "Analisando… (a primeira foto da sessão demora mais)";
   await new Promise(r => setTimeout(r, 30));
   try {
     const c0 = centerBox(DEC), full = BOX.x === c0.x && BOX.y === c0.y && BOX.s === c0.s, t0 = performance.now(), crop = makeCrop(DEC, full ? null : BOX); $("cv-base").getContext("2d").drawImage(crop.canvas, 0, 0, 448, 448);
@@ -774,12 +832,17 @@ const analyze = async () => {
     applyView(); renderCtx(ctx); renderNeigh(nn, ctx); renderWhy();
     show($("nonderm"), nd); ["probs", "chute", "groups", "heat-chips", "neigh"].forEach(i => $(i).style.opacity = nd ? ".3" : "1"); show($("loading"), false); show($("res"), true);
     show($("tabs"), true); syncTabs(); $("sec-mapa").scrollIntoView({ behavior: "smooth", block: "start" }); console.log("analise ms", LAST.ms);
-  } catch (e) { $("load-txt").textContent = "Erro ao analisar: " + (e && e.message ? e.message : e); console.log(e); }
+  } catch (e) { show($("entrada"), true); $("load-txt").textContent = "Erro ao analisar: " + (e && e.message ? e.message : e); console.log(e); }
   busy = false;
 };
 
 function go(v) { ["analisar", "sobre", "ajustes"].forEach(x => show($("view-" + x), x === v)); document.querySelectorAll(".tabbar button").forEach(b => b.classList.toggle("on", b.dataset.v === v)); show($("tabs"), v === "analisar" && !!LAST && !$("res").classList.contains("hide")); window.scrollTo(0, 0); }
 document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => go(b.dataset.v));
+function openSheet() { if (!session) return; go("analisar"); show($("sheet"), true); }
+function closeSheet() { show($("sheet"), false); }
+$("cam-btn").onclick = openSheet; $("hero-btn").onclick = openSheet; $("hero-lens").onclick = openSheet;
+$("sheet-bg").onclick = closeSheet; $("sheet-x").onclick = closeSheet;
+["foto", "foto-cam"].forEach(i => $(i).addEventListener("click", () => setTimeout(closeSheet, 300)));
 $("foto").onchange = onPhoto; $("foto-cam").onchange = onPhoto;
 function syncTabs() { document.querySelectorAll("#tabs button").forEach(b => show(b, !$(b.dataset.t).classList.contains("hide"))); }
 document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => $(b.dataset.t).scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -796,7 +859,7 @@ $("off").onclick = async e => {
   catch (x) { a.firstElementChild.textContent = "Não consegui baixar as miniaturas"; }
 };
 /* atualização automática: procura versão nova ao abrir e ao voltar para o app; aplica sozinho se não houver análise na tela */
-const APP_VER = "v6";
+const APP_VER = "v7";
 let swReg = null, pendingReload = false;
 function softReload() { if (busy || (LAST && !$("res").classList.contains("hide") && document.visibilityState === "visible")) { pendingReload = true; show($("upd"), true); } else location.reload(); }
 $("upd").onclick = () => location.reload();

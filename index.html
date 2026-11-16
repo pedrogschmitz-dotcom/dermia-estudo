@@ -227,6 +227,9 @@ body{position:fixed;inset:0;display:flex;flex-direction:column;height:var(--apph
 #scroller{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scroll-behavior:smooth}
 #scroller>.wrap{padding-bottom:22px}
 .tabbar{position:relative!important;left:auto;right:auto;bottom:auto!important;flex:none;padding:6px 12px calc(4px + env(safe-area-inset-bottom) * .8)}
+html{background:#061B33}
+.tabbar{background:#061B33!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.curta .tabbar{padding-bottom:4px}
 .tabbar button{padding:5px 4px}
 .tabs{top:6px!important}
 .sec{scroll-margin-top:62px!important}
@@ -236,8 +239,11 @@ body{position:fixed;inset:0;display:flex;flex-direction:column;height:var(--apph
 </style>
 <script>
 /* iPhone instalado: a tela às vezes fica mais curta que o aparelho e sobra faixa embaixo da barra */
-(function(){function fit(){var st=navigator.standalone||matchMedia('(display-mode: standalone)').matches;var p=document.getElementById('sap');var top=p?p.offsetHeight:0;var sh=Math.max(screen.height,screen.width)>innerHeight&&innerWidth<innerHeight?screen.height:innerHeight;var gap=sh-innerHeight;document.documentElement.style.setProperty('--apph',(st&&top>0&&gap>0&&gap<100?sh:innerHeight)+'px');}
-addEventListener('resize',fit);addEventListener('orientationchange',function(){setTimeout(fit,300)});addEventListener('pageshow',fit);document.addEventListener('DOMContentLoaded',fit);})();
+(function(){function fit(){var st=navigator.standalone||matchMedia('(display-mode: standalone)').matches;var h=innerHeight;var r=document.documentElement;
+r.style.setProperty('--apph',h+'px');
+/* iPhone instalado: às vezes a área da página termina antes do fim da tela (o sistema pinta a faixa de baixo). Nesse caso a barra não precisa da margem do indicador de início. */
+var full=Math.max(screen.height,screen.width);r.classList.toggle('curta',!!st&&innerWidth<innerHeight&&full-h>20);}
+addEventListener('resize',fit);addEventListener('orientationchange',function(){setTimeout(fit,300)});addEventListener('pageshow',fit);document.addEventListener('DOMContentLoaded',fit);document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(fit,100)});})();
 </script>
 </head>
 <body>
@@ -909,7 +915,7 @@ $("off").onclick = async e => {
   catch (x) { a.firstElementChild.textContent = "Não consegui baixar as miniaturas"; }
 };
 /* atualização automática: procura versão nova ao abrir e ao voltar para o app; aplica sozinho se não houver análise na tela */
-const APP_VER = "v10";
+const APP_VER = "v11";
 let swReg = null, pendingReload = false;
 function softReload() { if (busy || (LAST && !$("res").classList.contains("hide") && document.visibilityState === "visible")) { pendingReload = true; show($("upd"), true); } else location.reload(); }
 $("upd").onclick = () => location.reload();

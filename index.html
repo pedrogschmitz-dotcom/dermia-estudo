@@ -230,6 +230,11 @@ body{position:fixed;inset:0;display:flex;flex-direction:column;height:var(--apph
 html{background:#061B33}
 .tabbar{background:#061B33!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html.inst,html.inst body{height:var(--apph)!important;min-height:var(--apph)}
+.tabbar{padding:4px 10px calc(env(safe-area-inset-bottom) * .45)!important;border-top:1px solid rgba(255,255,255,.06)}
+.tabbar button{padding:6px 4px 2px!important;gap:2px;font-size:10.5px;background:transparent!important;letter-spacing:.01em}
+.tabbar button svg{width:25px;height:25px}
+.tabbar button.on{color:var(--accent)}
+.tabbar button.on svg{filter:drop-shadow(0 0 8px rgba(0,180,255,.45))}
 html.inst body{bottom:auto}
 .tabbar button{padding:5px 4px}
 .tabs{top:6px!important}
@@ -917,7 +922,7 @@ $("off").onclick = async e => {
   catch (x) { a.firstElementChild.textContent = "Não consegui baixar as miniaturas"; }
 };
 /* atualização automática: procura versão nova ao abrir e ao voltar para o app; aplica sozinho se não houver análise na tela */
-const APP_VER = "v12";
+const APP_VER = "v13";
 let swReg = null, pendingReload = false;
 function softReload() { if (busy || (LAST && !$("res").classList.contains("hide") && document.visibilityState === "visible")) { pendingReload = true; show($("upd"), true); } else location.reload(); }
 $("upd").onclick = () => location.reload();

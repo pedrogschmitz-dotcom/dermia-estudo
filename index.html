@@ -114,6 +114,9 @@ details.ctx[open]>summary::after{transform:rotate(-135deg)}
 .pill{font:800 14px var(--body);font-variant-numeric:tabular-nums;color:#04162E;background:var(--accent);border-radius:999px;padding:4px 11px}
 #chute{margin:14px 2px 2px}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:12px;background:#061A31;border-radius:12px;padding:4px}
+.seg3{grid-template-columns:1fr 1.25fr 1.1fr}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
+.chip.off{opacity:.45}
 .seg button{padding:10px;border-radius:9px;border:0;background:transparent;color:var(--mute);font:800 13px var(--body);cursor:pointer}.seg button.on{background:var(--paper);color:#04162E}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 0}
 .chip{border:1px solid var(--line);background:#0A2240;color:var(--paper);border-radius:999px;padding:8px 12px;font:500 13px var(--body);cursor:pointer}
@@ -339,7 +342,8 @@ addEventListener('resize',fit);addEventListener('orientationchange',function(){s
       <div class="card">
         <div class="viewer"><canvas id="cv-base" width="448" height="448"></canvas><canvas id="cv-heat" width="448" height="448"></canvas></div>
         <div id="chute"></div>
-        <div class="seg"><button id="sg-orig">Foto</button><button id="sg-heat" class="on">Mapa de calor</button></div>
+        <div class="seg seg3"><button id="sg-orig">Foto</button><button id="sg-heat" class="on">Mapa de calor</button><button id="sg-attr">Estruturas</button></div>
+        <div id="attr-box" class="hide"><div id="attr-chips" class="chips"></div><div class="sub" style="margin:8px 0 0">Detector treinado em 2.594 imagens com as estruturas desenhadas por especialistas (ISIC 2018). Marca em quadradinhos de 16 px, então o contorno é grosseiro. Erra com frequência, principalmente estrias, rede negativa e cistos: confira na foto.</div></div>
         <div id="heat-chips" class="chips"></div>
         <div class="legend"><span><i class="sw" style="background:#E8650A"></i>a favor do diagnóstico</span><span><i class="sw" style="background:var(--cool)"></i>contra</span></div>
         <details class="ctx"><summary>Como ler o mapa</summary><div class="sub" style="margin-top:8px">Cada quadrado = 16×16 px do recorte central 224×224. Mostra onde a evidência para o diagnóstico escolhido está, não prova nada sobre a lesão. A intensidade é comparável entre os diagnósticos dos botões. O modelo mistura informação entre regiões vizinhas, então a localização é aproximada.</div></details>
@@ -432,7 +436,7 @@ addEventListener('resize',fit);addEventListener('orientationchange',function(){s
 "use strict";
 const $ = id => document.getElementById(id);
 const show = (el, on) => el.classList.toggle("hide", !on);
-let session = null, MODEL = null, W = null, HEAD = null, HF = null, EXP = null, BANK = null, BANKV = null;
+let ATTR = null, session = null, MODEL = null, W = null, HEAD = null, HF = null, EXP = null, BANK = null, BANKV = null;
 let busy = false, LAST = null; // {contrib, probs, order}
 
 /* ---------- armazenamento local do modelo ---------- */
@@ -444,8 +448,8 @@ async function kvSet(k, v) { const d = await idb(); return new Promise((res, rej
 async function getJSON(u) { const r = await fetch(u); if (!r.ok) throw new Error(u + " (" + r.status + ")"); return r.json(); }
 async function getBin(u) { const r = await fetch(u); if (!r.ok) throw new Error(u + " (" + r.status + ")"); return r.arrayBuffer(); }
 async function loadData() {
-  const [m, w, bank, bv, exp] = await Promise.all([getJSON("data/model.json"), getBin("data/model_w.bin"), getJSON("data/bank.json"), getBin("data/bank.bin"), getJSON("data/explain.json")]);
-  MODEL = m; W = new Float32Array(w); BANK = bank; BANKV = new Int8Array(bv); EXP = exp;
+  const [m, w, bank, bv, exp, at] = await Promise.all([getJSON("data/model.json"), getBin("data/model_w.bin"), getJSON("data/bank.json"), getBin("data/bank.bin"), getJSON("data/explain.json"), getJSON("data/attr.json")]);
+  MODEL = m; W = new Float32Array(w); BANK = bank; BANKV = new Int8Array(bv); EXP = exp; ATTR = at;
   if (W.length !== m.names.length * m.D) throw new Error("pesos do modelo com tamanho inesperado");
   if (BANKV.length !== bank.n * 512) throw new Error("banco de casos com tamanho inesperado");
   HF = { names: m.names, groups: m.groups, T: m.T, cv: m.cv }; HEAD = { names: m.gnames, pt: m.gpt, det: m.det };
@@ -641,10 +645,33 @@ function neighbors(emb, K) {
 }
 
 /* ---------- desenho ---------- */
-let curClass = 0, showHeat = true;
+let curClass = 0, showHeat = true, mode = "heat", attrOn = {};
+function attrProbs(tok) {                          // probabilidade de cada estrutura em cada quadradinho (tokens do mesmo modelo, sem custo extra)
+  const D = 768, g = new Float64Array(D); for (let i = 0; i < 196; i++) for (let j = 0; j < D; j++) g[j] += tok[i * D + j] / 196;
+  return ATTR.W.map((w, k) => { let bg = ATTR.b[k]; for (let j = 0; j < D; j++) bg += w[D + j] * g[j]; const out = new Float64Array(196);
+    for (let i = 0; i < 196; i++) { let z = bg; const o = i * D; for (let j = 0; j < D; j++) z += w[j] * tok[o + j]; out[i] = 1 / (1 + Math.exp(-z)); } return out; });
+}
+function attrSummary() { return ATTR.ids.map((id, k) => { const pr = LAST.attr[k], th = ATTR.th[k]; let n = 0, mx = 0; for (let i = 0; i < 196; i++) { if (pr[i] >= th) n++; if (pr[i] > mx) mx = pr[i]; } return { k, id, pt: ATTR.pt[k], color: ATTR.color[k], n, mx, on: n > 0 && mx >= (ATTR.gate ? ATTR.gate[k] : 0) }; }); }
+function drawAttr(g) {
+  const S = 448 / 14; g.lineWidth = 3; g.lineCap = "round";
+  attrSummary().forEach(a => { if (!a.on || attrOn[a.id] === false) return; const pr = LAST.attr[a.k], th = ATTR.th[a.k], on = i => pr[i] >= th, at = (r, c) => r >= 0 && r < 14 && c >= 0 && c < 14 && on(r * 14 + c);
+    g.fillStyle = a.color + "33"; g.strokeStyle = a.color; g.beginPath();
+    for (let r = 0; r < 14; r++) for (let c = 0; c < 14; c++) { if (!at(r, c)) continue; g.fillRect(c * S, r * S, S, S); const x = c * S, y = r * S;
+      if (!at(r - 1, c)) { g.moveTo(x, y); g.lineTo(x + S, y); } if (!at(r + 1, c)) { g.moveTo(x, y + S); g.lineTo(x + S, y + S); }
+      if (!at(r, c - 1)) { g.moveTo(x, y); g.lineTo(x, y + S); } if (!at(r, c + 1)) { g.moveTo(x + S, y); g.lineTo(x + S, y + S); } }
+    g.stroke(); });
+}
+function renderAttrChips() {
+  const box = $("attr-chips"); box.innerHTML = "";
+  attrSummary().forEach(a => { const b = document.createElement("button"); b.className = "chip" + (a.on && attrOn[a.id] !== false ? "" : " off");
+    b.innerHTML = '<i class="dot" style="background:' + a.color + '"></i>' + esc(a.pt) + ' <span class="d">' + (a.on ? "detectada" : "não detectada") + '</span>';
+    if (a.on) b.onclick = () => { attrOn[a.id] = attrOn[a.id] === false; renderAttrChips(); drawHeat(); }; box.appendChild(b); });
+}
+function setMode(m) { mode = m; showHeat = m !== "orig"; ["orig", "heat", "attr"].forEach(x => $("sg-" + x).classList.toggle("on", x === m)); show($("heat-chips"), m === "heat"); show($("attr-box"), m === "attr"); if (m === "attr") renderAttrChips(); drawHeat(); }
 function drawHeat() {
   const hc = $("cv-heat"), g = hc.getContext("2d"); g.clearRect(0, 0, 448, 448);
   if (!showHeat || !LAST) return;
+  if (mode === "attr") { drawAttr(g); return; }
   let mx = 1e-9; LAST.order.slice(0, 4).forEach(k => heatFor(k).forEach(v => { mx = Math.max(mx, Math.abs(v)); }));   // mesma escala para os 4 botões
   const vals = heatFor(curClass), sm = document.createElement("canvas"); sm.width = 14; sm.height = 14; const sg = sm.getContext("2d"), id = sg.createImageData(14, 14);
   for (let i = 0; i < 196; i++) { const v = vals[i] / mx, a = Math.min(1, Math.pow(Math.abs(v), 0.8)) * 0.78, c = v >= 0 ? [232, 101, 10] : [60, 130, 255]; id.data[i * 4] = c[0]; id.data[i * 4 + 1] = c[1]; id.data[i * 4 + 2] = c[2]; id.data[i * 4 + 3] = Math.round(a * 255); }
@@ -698,8 +725,9 @@ function renderNeigh(nn, ctx) {
   $("votes").textContent = "Entre os " + nn.length + " mais parecidos: " + ord.map(([v, k]) => HF.names[k] + " " + Math.round(100 * v / tot) + "%").join(" · ");
 }
 $("ov").onclick = () => show($("ov"), false);
-$("sg-orig").onclick = () => { showHeat = false; $("sg-orig").classList.add("on"); $("sg-heat").classList.remove("on"); drawHeat(); };
-$("sg-heat").onclick = () => { showHeat = true; $("sg-heat").classList.add("on"); $("sg-orig").classList.remove("on"); drawHeat(); };
+$("sg-orig").onclick = () => setMode("orig");
+$("sg-heat").onclick = () => setMode("heat");
+$("sg-attr").onclick = () => setMode("attr");
 
 
 /* ---------- contexto clínico ---------- */
@@ -786,6 +814,7 @@ function renderWhy() {
   const viz = LAST.nn.filter(n => BANK.items[n.i].f === A).length, vizB = LAST.nn.filter(n => BANK.items[n.i].f === B).length, cl = EXP.classes[A], clB = EXP.classes[B];
   const li = (arr, f) => arr.length ? "<ul>" + arr.map(x => "<li>" + f(x) + "</li>").join("") + "</ul>" : "";
   let h = '<div class="fl lo" style="margin-top:0"><b>' + esc(nm(A)) + "</b> (" + pc(p[A]) + "), seguido de " + esc(nm(B)) + " (" + pc(p[B]) + ") e " + esc(nm(C)) + " (" + pc(p[C]) + ").</div>";
+  if (LAST.attr) { const det = attrSummary().filter(a => a.on); h += '<div class="fl" style="margin-top:8px"><b>Estruturas que o detector marcou na foto:</b> ' + (det.length ? det.map(a => '<i class="dot" style="background:' + a.color + '"></i>' + esc(a.pt)).join(" · ") : "nenhuma das 5 que ele conhece (rede pigmentar, rede negativa, estrias, cistos tipo milium, glóbulos)") + '. Veja em Mapa → Estruturas.</div>'; }
   h += "<h3 style='font-size:16px;margin:12px 0 4px'>O que sustenta o chute</h3>";
   h += (pro.length ? "<div class='sub' style='margin:0'>Estruturas típicas desse diagnóstico que o modelo sugere:</div>" + li(pro, tag) : "<div class='sub' style='margin:0'>O modelo não sugeriu nenhuma estrutura típica desse diagnóstico: o chute vem do aspecto geral da imagem (cor, textura, forma), não de um achado específico.</div>");
   h += "<div class='sub' style='margin:4px 0'>Casos parecidos do banco: <b>" + viz + " de " + LAST.nn.length + "</b> são " + esc(nm(A)) + (vizB ? ", " + vizB + " são " + esc(nm(B)) : "") + ". Veja o mapa de calor para saber onde a evidência está.</div>";
@@ -849,7 +878,7 @@ const analyze = async () => {
     let en = 0; for (let j = 0; j < 512; j++) en += emb[j] * emb[j]; en = Math.sqrt(en);
     const nn = neighbors(emb, 12), nd = nonDerm(emb) > 0.5;
     LAST = { toks, hc: {}, pImg: p, pCtx: adj.q, used: adj.used, ctx, probs: p, order, embN: Array.from(emb, x => x / en), nn, nd, ms: Math.round(performance.now() - t0) };
-    showHeat = true; $("sg-heat").classList.add("on"); $("sg-orig").classList.remove("on");
+    LAST.attr = attrProbs(toks[0].tok); attrOn = {}; mode = "heat"; showHeat = true; ["orig", "heat", "attr"].forEach(x => $("sg-" + x).classList.toggle("on", x === "heat")); show($("heat-chips"), true); show($("attr-box"), false);
     applyView(); renderCtx(ctx); renderNeigh(nn, ctx); renderWhy();
     show($("nonderm"), nd); ["probs", "chute", "groups", "heat-chips", "neigh"].forEach(i => $(i).style.opacity = nd ? ".3" : "1"); show($("loading"), false); show($("res"), true);
     show($("tabs"), true); syncTabs(); $("sec-mapa").scrollIntoView({ behavior: "smooth", block: "start" }); console.log("analise ms", LAST.ms);
@@ -880,7 +909,7 @@ $("off").onclick = async e => {
   catch (x) { a.firstElementChild.textContent = "Não consegui baixar as miniaturas"; }
 };
 /* atualização automática: procura versão nova ao abrir e ao voltar para o app; aplica sozinho se não houver análise na tela */
-const APP_VER = "v9";
+const APP_VER = "v10";
 let swReg = null, pendingReload = false;
 function softReload() { if (busy || (LAST && !$("res").classList.contains("hide") && document.visibilityState === "visible")) { pendingReload = true; show($("upd"), true); } else location.reload(); }
 $("upd").onclick = () => location.reload();
@@ -892,11 +921,16 @@ if ("serviceWorker" in navigator) {
   setInterval(() => swReg && swReg.update().catch(() => {}), 30 * 60 * 1000);
 }
 $("upd-check").onclick = async () => { $("st").textContent = "Procurando…"; try { if (swReg) { await swReg.update(); $("st").textContent = swReg.installing || swReg.waiting ? "Versão nova encontrada: aplicando…" : "Você já está na versão mais recente."; } else $("st").textContent = "Atualização automática indisponível nesta prévia."; } catch (e) { $("st").textContent = "Sem conexão para procurar atualização."; } };
+function attrAccHTML() {
+  return '<p style="margin-top:14px"><b>Detector de estruturas</b> (2.594 imagens do ISIC 2018 com as estruturas desenhadas à mão, validação cruzada por paciente). Sensibilidade = das fotos que têm a estrutura, quantas ele marca. Especificidade = das que não têm, quantas ele deixa em branco. Sobreposição = quanto a área marcada coincide com a desenhada (1 = perfeita; os melhores da competição chegaram perto de 0,45).</p><table><tr><td><b>Estrutura</b></td><td>sens. / espec. / sobrep.</td></tr>' +
+    ATTR.ids.map((id, k) => { const c = ATTR.cv[id], q = ATTR.pres[id]; return "<tr><td>" + esc(ATTR.pt[k]) + "</td><td>" + Math.round(q.sens * 100) + "% / " + Math.round(q.espec * 100) + "% / " + c.jaccard.toFixed(2) + "</td></tr>"; }).join("") + "</table>";
+}
 function renderAcc() {
   const c = HF.cv, pc = x => Math.round(x * 100) + "%", rows = Object.entries(c.res).sort((a, b) => b[1].n - a[1].n).map(([n, r]) => "<tr><td>" + esc(n) + ' <span class="d">(' + r.n + ')</span></td><td>' + pc(r.top1) + " / " + pc(r.top3) + "</td></tr>").join("");
   $("acc").innerHTML = "<p>Teste no ISIC: " + c.n + " imagens de dermatoscopia com histopatologia, " + HF.names.length + " diagnósticos, validação cruzada sem misturar imagens do mesmo paciente, feita com o mesmo modelo e o mesmo tratamento de imagem que rodam neste app.</p><table>" +
     "<tr><td>Diagnóstico exato em 1º lugar</td><td>" + pc(c.top1) + "</td></tr><tr><td>Exato ou compatível (laudo sem subtipo)</td><td>" + pc(c.compat) + "</td></tr><tr><td>Entre os 3 primeiros</td><td>" + pc(c.top3) + "</td></tr><tr><td>Entre os 5 primeiros</td><td>" + pc(c.top5) + "</td></tr><tr><td>Grupo certo (9 categorias)</td><td>" + pc(c.group) + "</td></tr></table>" +
     '<p class="d">"Compatível": o chute e o laudo são da mesma família e um dos dois não informa o subtipo (ex.: chute "melanoma in situ", laudo "melanoma" sem subtipo).</p><p class="d">Por diagnóstico (nº de casos): 1º lugar / entre os 3 primeiros</p><table>' + rows + "</table><p>Subtipos com menos de 100 casos têm acerto instável. Parte das imagens vem de poucos centros: o modelo pode aprender o estilo da foto junto com a lesão. O modelo pode ter visto ISIC no pré-treino, então estes números são otimistas.</p>";
+  $("acc").insertAdjacentHTML("beforeend", attrAccHTML());
 }
 boot();
 </script>

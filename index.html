@@ -217,8 +217,25 @@ input[type=range]{width:100%;accent-color:#00B4FF;margin:4px 0 12px}
 .sheet-x{justify-content:center;font-weight:800;background:#0F2B4A;border-radius:18px}
 .sheet-t{padding:12px 18px 4px;font-size:12.5px;color:var(--mute);text-align:center}
 @keyframes fade{from{opacity:0}}@keyframes rise{from{transform:translateY(40px);opacity:0}}
+/* layout de app (mesma solução do Estúdio Curae) */
+html{height:100%}
+body{position:fixed;inset:0;display:flex;flex-direction:column;height:var(--apph,100%);overflow:hidden;min-height:0}
+.top{position:relative;flex:none}
+#scroller{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scroll-behavior:smooth}
+#scroller>.wrap{padding-bottom:22px}
+.tabbar{position:relative!important;left:auto;right:auto;bottom:auto!important;flex:none;padding:6px 12px calc(4px + env(safe-area-inset-bottom) * .8)}
+.tabbar button{padding:5px 4px}
+.tabs{top:6px!important}
+.sec{scroll-margin-top:62px!important}
+#editor,#loading{scroll-margin-top:8px!important}
+@media (prefers-reduced-motion:reduce){#scroller{scroll-behavior:auto}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 </style>
+<script>
+/* iPhone instalado: a tela às vezes fica mais curta que o aparelho e sobra faixa embaixo da barra */
+(function(){function fit(){var st=navigator.standalone||matchMedia('(display-mode: standalone)').matches;var p=document.getElementById('sap');var top=p?p.offsetHeight:0;var sh=Math.max(screen.height,screen.width)>innerHeight&&innerWidth<innerHeight?screen.height:innerHeight;var gap=sh-innerHeight;document.documentElement.style.setProperty('--apph',(st&&top>0&&gap>0&&gap<100?sh:innerHeight)+'px');}
+addEventListener('resize',fit);addEventListener('orientationchange',function(){setTimeout(fit,300)});addEventListener('pageshow',fit);document.addEventListener('DOMContentLoaded',fit);})();
+</script>
 </head>
 <body>
 <div id="intro" class="intro">
@@ -255,6 +272,8 @@ input[type=range]{width:100%;accent-color:#00B4FF;margin:4px 0 12px}
   <h1 class="logo"><svg viewBox="0 0 128 128" width="28" height="28" aria-hidden="true"><circle cx="50" cy="78" r="28" fill="none" stroke="#00B4FF" stroke-width="10"/><path d="M78 106 V28" stroke="#00B4FF" stroke-width="10" stroke-linecap="round" fill="none"/><path d="M78 30 L91 17 H101" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="106" cy="17" r="5" fill="#fff"/><circle cx="50" cy="78" r="8" fill="#fff"/></svg><span>dermatolog<b>.ia</b></span></h1>
   <button id="lock-now" class="ic" aria-label="Bloquear o app"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></button>
 </header>
+<div id="sap" style="position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none"></div>
+<main id="scroller">
 <div class="wrap">
 <section id="view-analisar" class="view">
   <div id="upd" class="alert soft hide" style="cursor:pointer">Nova versão instalada. Toque aqui para recarregar.</div>
@@ -390,6 +409,7 @@ input[type=range]{width:100%;accent-color:#00B4FF;margin:4px 0 12px}
 </section>
 </div>
 
+</main>
 <nav class="tabbar" aria-label="Menu"><div class="in">
   <button data-v="analisar" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>Analisar</button>
   <button data-v="sobre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>Sobre o modelo</button>
@@ -487,7 +507,7 @@ async function boot() {
   }
   show($("m-status"), false); show($("m-install"), true);
 }
-function ready() { renderAcc(); $("ver").textContent = APP_VER + " · modelo " + MODEL.model_sha.slice(0, 7); show($("intro"), false); show($("entrada"), !LAST); document.documentElement.scrollTop = 0; $("nb").textContent = BANK.n; }
+function ready() { renderAcc(); $("ver").textContent = APP_VER + " · modelo " + MODEL.model_sha.slice(0, 7); show($("intro"), false); show($("entrada"), !LAST); $("scroller").scrollTop = 0; $("nb").textContent = BANK.n; }
 $("rm").onclick = async e => { e.preventDefault(); try { const d = await idb(); const os = d.transaction("kv", "readwrite").objectStore("kv"); ["model", "model_sha", "fid", "pwcheck"].forEach(k => os.delete(k)); } catch (x) {} location.reload(); };
 
 function b64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
@@ -669,7 +689,7 @@ function renderNeigh(nn, ctx) {
   nn.slice(0, 8).forEach(({ i, s }) => {
     const it = BANK.items[i], d = document.createElement("div"), dx = it.f >= 0 ? HF.names[it.f] : it.dx; d.className = "cs";
     const th = "https://isic-archive.s3.us-east-1.amazonaws.com/thumbnails/" + it.id + "_thumbnail.jpg", full = "https://isic-archive.s3.us-east-1.amazonaws.com/images/" + it.id + ".jpg";
-    const hist = /^histopath/i.test(it.conf || "") ? '<span class="tag ok">histopatologia</span>' : '<span class="tag bad">' + (it.conf && !/^histopath/i.test(it.conf) ? esc(CONFPT[it.conf] || it.conf) : "sem histopatologia informada") + '</span>';
+    const hist = /^histopat/i.test(it.conf || "") ? '<span class="tag ok">histopatologia</span>' : '<span class="tag bad">' + (it.conf && !/^histopat/i.test(it.conf) ? esc(CONFPT[it.conf] || it.conf) : "sem histopatologia informada") + '</span>';
     d.innerHTML = '<img alt="' + esc(dx) + '"><div><div class="dx">' + esc(dx) + '</div><div class="mt">semelhança ' + Math.round(s * 100) + '%</div>' + hist + (it.est ? '<span class="tag">estudo</span>' : '') + ((normSite(it.site) || it.age || normSex(it.sex)) ? '<div class="mt">' + [SITEPT[normSite(it.site)], it.age ? it.age + " anos" : null, normSex(it.sex) === "M" ? "masc." : normSex(it.sex) === "F" ? "fem." : null].filter(Boolean).join(" · ") + '</div>' : '') +
       '<div class="mt">' + esc(it.id) + ' · ' + esc(it.lic) + (it.at ? " · " + esc(it.at) : "") + '</div></div>';
     const im = d.querySelector("img"); thumbURL(it).then(u => { im.src = u || th; }); im.onerror = () => { if (im.src !== th) im.src = th; };
@@ -837,7 +857,7 @@ const analyze = async () => {
   busy = false;
 };
 
-function go(v) { ["analisar", "sobre", "ajustes"].forEach(x => show($("view-" + x), x === v)); document.querySelectorAll(".tabbar button").forEach(b => b.classList.toggle("on", b.dataset.v === v)); show($("tabs"), v === "analisar" && !!LAST && !$("res").classList.contains("hide")); window.scrollTo(0, 0); }
+function go(v) { ["analisar", "sobre", "ajustes"].forEach(x => show($("view-" + x), x === v)); document.querySelectorAll(".tabbar button").forEach(b => b.classList.toggle("on", b.dataset.v === v)); show($("tabs"), v === "analisar" && !!LAST && !$("res").classList.contains("hide")); $("scroller").scrollTop = 0; }
 document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => go(b.dataset.v));
 function openSheet() { if (!session) return; go("analisar"); show($("sheet"), true); }
 function closeSheet() { show($("sheet"), false); }
@@ -847,7 +867,7 @@ $("sheet-bg").onclick = closeSheet; $("sheet-x").onclick = closeSheet;
 $("foto").onchange = onPhoto; $("foto-cam").onchange = onPhoto;
 function syncTabs() { document.querySelectorAll("#tabs button").forEach(b => show(b, !$(b.dataset.t).classList.contains("hide"))); }
 document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => $(b.dataset.t).scrollIntoView({ behavior: "smooth", block: "start" }));
-if ("IntersectionObserver" in window) { const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.t === e.target.id)); }), { rootMargin: "-35% 0px -60% 0px" });
+if ("IntersectionObserver" in window) { const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.t === e.target.id)); }), { root: $("scroller"), rootMargin: "-25% 0px -65% 0px" });
   ["sec-mapa", "sec-dx", "whyres", "ctxres", "sec-casos"].forEach(i => io.observe($(i))); }
 function ctxCount() { const n = document.querySelectorAll("#ctx input:checked").length + Array.from(document.querySelectorAll("#ctx select, #ctx input[type=number], #ctx textarea")).filter(e => e.value).length; $("ctx-n").textContent = n; show($("ctx-n"), n > 0); }
 $("ctx").addEventListener("input", ctxCount); $("ctx").addEventListener("change", ctxCount); $("c-clear").addEventListener("click", () => setTimeout(ctxCount, 0));
@@ -860,7 +880,7 @@ $("off").onclick = async e => {
   catch (x) { a.firstElementChild.textContent = "Não consegui baixar as miniaturas"; }
 };
 /* atualização automática: procura versão nova ao abrir e ao voltar para o app; aplica sozinho se não houver análise na tela */
-const APP_VER = "v8";
+const APP_VER = "v9";
 let swReg = null, pendingReload = false;
 function softReload() { if (busy || (LAST && !$("res").classList.contains("hide") && document.visibilityState === "visible")) { pendingReload = true; show($("upd"), true); } else location.reload(); }
 $("upd").onclick = () => location.reload();
